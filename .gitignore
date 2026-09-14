@@ -1,0 +1,45 @@
+# Unity caches and generated output
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Ll]ogs/
+[Uu]ser[Ss]ettings/
+[Bb]uild/
+[Bb]uilds/
+[Cc]aptures/
+[Mm]emoryCaptures/
+[Rr]ecordings/
+
+# Local validation tools and captures
+Assets/LocalValidation/
+Assets/LocalValidation.meta
+
+# IDE / OS files
+.vs/
+.vsconfig
+.vscode/
+.idea/
+*.csproj
+*.sln
+*.slnx
+*.suo
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+sysinfo.txt
+crashlytics-build.properties
+*.stackdump
+.gradle/
+ExportedObj/
+*.apk
+*.aab
+*.unitypackage
+.DS_Store
+Thumbs.db
+Desktop.ini
