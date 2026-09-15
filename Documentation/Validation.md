@@ -1,4 +1,46 @@
-# Main menu validation
+# Validation
+
+## Milestone 2 — planet selection, 2026-09-15
+
+Validated with Unity 6000.5.8f1, URP 17.5.0 and Input System 1.20.0. The original package manifest and lockfile are unchanged.
+
+| Check | Result |
+| --- | --- |
+| Saved assets | MainMenu and PlanetSelection reload successfully; exactly one NEW COLONY callback, three inert menu placeholders, one BACK callback and disabled CONTINUE without a callback |
+| Final clean reopen | Temporary instrumentation removed through AssetDatabase; project reopened without it; both saved-scene checks pass again and the development seed override is disabled |
+| Deterministic geography | Seeds 73129, 18041, 90210, 42817 and 61503 produce distinct map hashes; regenerating 73129 reproduces exact color/surface bytes |
+| Feature coverage | All five seeds contain forests, deserts, snow, rock/mountains, plains, inland lakes and rivers; drainage links strictly descend the filled drainage surface |
+| Geographic continuity | Wrapped longitude equivalence and exact uniform polar rows pass; four rotational views plus a polar view inspected for each seed |
+| Land coverage | Geographic sample estimates: 33.5%, 30.6%, 29.9%, 35.9% and 43.8% respectively; these are continental coverage estimates, not construction/buildability measurements |
+| Globe picking | Land clicks in forest, desert, snow, rock, polar and seam regions replace one selection; oceans, lakes, rivers and background preserve it |
+| Gestures | Stationary click, maximum-excursion threshold, out-and-back drag, UI-owned gestures, release over UI and focus-loss capture reset pass |
+| Flag | Raised-to-ground planting animation runs while the globe rotates; base stays fixed in local coordinates; far-side depth occlusion and single-marker replacement pass |
+| Camera and zoom | Camera transform and globe center remain unchanged; sustained extreme wheel input clamps safely; wheel over UI does not zoom |
+| Transitions and lifetime | Ten consecutive editor entry/BACK cycles pass with fresh seeds, empty new selections, one camera/EventSystem and five generated Unity resources per visit; zero generated resources remain in MainMenu |
+| Resolutions | Actual Game view sizes 1920 × 1080, 2560 × 1440 and 1280 × 1024 verified; nominal framing plus minimum/maximum zoom captures inspected; bottom controls stay clear |
+| Editor runtime | Clean interaction/lifetime run reports zero runtime errors or exceptions |
+| Windows x64 build | Succeeded: zero errors, zero warnings, 102,577,776 bytes; final incremental smoke build took 48.25 seconds |
+| Standalone run | Input/flag/zoom checks and ten entry/BACK cycles pass with zero runtime errors under normal desktop permissions; a visible player run also passes entry, flag selection and zoom capture checks |
+
+The render/collision mesh has 2,562 vertices / 5,120 triangles. The CPU geography graph has 40,962 samples. Three 1024 × 512 RGBA32 maps use 6 MiB of GPU pixel payload without mipmaps. Numeric generation took 6.54–7.57 seconds in the final fixed-seed checks and 6.17–6.40 seconds during the five captured Play Mode entries. The Windows player measured 8.69–13.55 seconds across its run; generation latency remains a prototype limitation. Rendering and rotation reuse those resources.
+
+Focused checks remain available under **Meridian → Validate Planet Saved Assets** and **Meridian → Validate Planet Generation and Gestures**. Input checks use virtual Input System devices in the actual Unity runtime. Temporary test instrumentation communicates through local files, has no network listener, and is excluded from the committed project.
+
+The ignored Windows smoke build includes instrumentation enabled only by `-meridian-smoke-test`; a normal launch does not create it. The first restricted launch could not obtain the initial Windows mouse position; the normal-desktop rerun resolved that environment issue. Hidden-window capture was unavailable, so the visual checks were repeated in a visible game window. The final visible-run result contains no runtime errors. These intermediate launch/capture failures were not suppressed in the original logs.
+
+Local evidence is ignored by Git:
+
+- `Logs/PlanetGenerationValidation.txt` — seed hashes, feature counts, generation timings and focused check results.
+- `Logs/PlanetSavedAssets.txt` and `Logs/MainMenuValidation.txt` — saved-reference checks.
+- `Captures/Editor-PlanetSmoke-PASS.json` and `Captures/PlanetSmokeProgress.txt` — interaction/lifetime checks.
+- `Captures/Planet-<seed>-View0.png` through `View3.png`, plus `Pole.png` — actual Game view rotations.
+- `Captures/Planet-<seed>-Contact.png` — comparison sheets made from those captures.
+- `Captures/Planet-Flag-<resolution>.png` and `Planet-ZoomIn/Out-<resolution>.png` — UI and framing checks.
+- `Captures/Windows-PlanetSmoke-PASS.json`, `Windows-PlanetVisual-PASS.json`, and `Windows-Planet-Flag-1920x1080.png` — standalone results and actual rendered capture.
+
+Known boundaries: terrain and hydrology are orbital approximations; minimum river width is deliberately symbolic for readability. Local colony terrain, exact construction footprints and a measured connected-flat-area guarantee are not part of this milestone. CONTINUE remains disabled.
+
+## Milestone 1 — historical foundation validation
 
 Validated in the actual Unity 6000.5.8f1 editor and a Windows x86-64 player on 2026-09-14.
 

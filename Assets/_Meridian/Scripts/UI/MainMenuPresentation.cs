@@ -4,12 +4,18 @@ using UnityEngine.UI;
 
 namespace Meridian
 {
-    /// <summary>Initial focus and cursor presentation. No gameplay or menu actions.</summary>
+    /// <summary>Menu focus and the entry point into a fresh planet visit.</summary>
     public sealed class MainMenuPresentation : MonoBehaviour
     {
         [SerializeField] private Button firstSelection;
+        [SerializeField] private ScreenTransition transitionPrefab;
 
         public void Configure(Button button) => firstSelection = button;
+        public void ConfigureTransition(ScreenTransition transition) => transitionPrefab = transition;
+        public void OpenPlanetSelection()
+        {
+            if (!ScreenTransition.Active) ScreenTransition.Travel(transitionPrefab, "PlanetSelection");
+        }
 
         private void Start()
         {

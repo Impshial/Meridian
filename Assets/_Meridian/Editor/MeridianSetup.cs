@@ -28,6 +28,7 @@ namespace Meridian.Editor
         [MenuItem("Meridian/Author Main Menu Foundation")]
         public static void Create()
         {
+            if (File.Exists(PlanetSelectionAuthoring.ScenePath)) throw new InvalidOperationException("The foundation has been extended. This original setup command would overwrite the planet-selection integration.");
             if (EditorApplication.isPlaying) throw new InvalidOperationException("Exit Play Mode before authoring.");
             foreach (string folder in new[] { "Scenes", "Settings", "Art/UI", "Art/Fonts", "Prefabs/UI", "Input" })
                 Directory.CreateDirectory(Root + "/" + folder);

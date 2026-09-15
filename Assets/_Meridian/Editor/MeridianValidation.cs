@@ -26,7 +26,8 @@ namespace Meridian.Editor
             Require(buttons.Length == 4, "Expected exactly four buttons.");
             Require(buttons.Select(button => button.GetComponentInChildren<TMP_Text>().text)
                 .SequenceEqual(new[] { "NEW COLONY", "LOAD COLONY", "SETTINGS", "QUIT" }), "Incorrect labels or order.");
-            Require(buttons.All(button => button.onClick.GetPersistentEventCount() == 0), "An action callback was assigned.");
+            Require(buttons[0].onClick.GetPersistentEventCount() == 1 && buttons[0].onClick.GetPersistentMethodName(0) == "OpenPlanetSelection", "NEW COLONY entry is missing.");
+            Require(buttons.Skip(1).All(button => button.onClick.GetPersistentEventCount() == 0), "A placeholder action callback was assigned.");
             var background = components.OfType<RawImage>().Single();
             Require(background.texture && background.texture.width == 1672 && background.texture.height == 941, "Background resolution changed.");
             Require(background.color == Color.white && !background.raycastTarget, "Background tint or raycast changed.");
@@ -44,13 +45,13 @@ namespace Meridian.Editor
             }
             foreach (var label in buttons.Select(button => button.GetComponentInChildren<TMP_Text>()))
                 Require(label.text.All(character => character == ' ' || label.font.HasCharacter(character)), "Missing label glyph.");
-            Require(EditorBuildSettings.scenes.Length == 1 && EditorBuildSettings.scenes[0].enabled &&
-                EditorBuildSettings.scenes[0].path == scene.path, "Startup scene configuration changed.");
+            Require(EditorBuildSettings.scenes.Length == 2 && EditorBuildSettings.scenes.All(s => s.enabled) &&
+                EditorBuildSettings.scenes[0].path == scene.path && EditorBuildSettings.scenes[1].path == PlanetSelectionAuthoring.ScenePath, "Two-scene startup configuration changed.");
             Directory.CreateDirectory("Logs");
             File.WriteAllText("Logs/MainMenuValidation.txt", "PASS\nUnity " + Application.unityVersion +
                 "\nScene " + scene.path + "\nBackend " + PlayerSettings.GetScriptingBackend(NamedBuildTarget.Standalone) +
                 "\nAPI " + PlayerSettings.GetApiCompatibilityLevel(NamedBuildTarget.Standalone) +
-                "\nFour inert buttons; valid saved references, font glyphs, source texture and URP quality assignments.\n");
+                "\nNEW COLONY entry; three inert placeholders; valid saved references, font glyphs, source texture and URP quality assignments.\n");
             Debug.Log("Meridian saved main menu validation passed.");
         }
 
