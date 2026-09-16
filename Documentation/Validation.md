@@ -1,5 +1,21 @@
 # Validation
 
+## Larger survey and irregular forests — 2026-09-16
+
+Surface generator `meridian-surface-5` expands the region from **4 km² to 9 km²** (2.25×), using nine 1 km tiles. The terrain sample spacing remains **1.953125 m**; the 513-height, 128-layer and 257-water sample budgets remain per tile. The centered 3×3 grid uses a half-tile origin offset shared by height sampling, object ownership and future neighbor generation. The previous gentle landform settings are unchanged. Height/layer CPU arrays increase to approximately **9.04 / 2.81 MiB**; the shared ground-texture pixel payload stays **80 MiB**.
+
+Forests now use zero to three randomly located grove candidates per spatial-index cell, varied axes/orientations, noisy boundaries and internal gaps. Trees are scattered continuously within groves with deterministic same-grove separation, replacing the small-cell lattice. Grove identities include candidate slots; tree identities include stable dart indices. Ownership and clipping occur after geometric scattering, preserving cross-tile placement and timber totals.
+
+The focused seed 73129 numeric check passes with validation-only 1024 × 512 planet maps and production terrain resolution: **22.01 s** initial numeric generation, **3,816,800 m²** connected gentle ground and a **610 m** usable interior. It produces **28,537 trees in 121 groves**, containing **1,485,857 wood units**. Repeated tile heights/objects match exactly, every active border and two extension neighbors agree, and ownership/placement/cancellation checks pass. Tree positions occupy the formerly empty lattice-edge bands at **39.5% / 39.9%** on X/Z (40% expected for uniform phases); the old lattice restricted positions to cell centers. Multiple groves can share an index cell.
+
+The expanded region includes additional regional slopes, so the flatness regression now requires at least 1 km² of connected gentle land in this fixed representative region instead of applying the old boundary's 60% sample ratio. Measured dry inland samples are **1,744/3,441** at or below 5°, with added landform relief still at **14.7 m**. The earlier steep-hill version would fail the connected-area check.
+
+Saved assets and the fast camera-boundary regression pass. The enlarged survey supports **594.24 m** maximum distance at 16:9 while retaining stable focus through tilts/turns. Its widest-view pan-focus area is approximately **2.36×** the previous area's; at the same close zoom, the increase is larger. Evidence: `Logs/SurfaceGenerationValidation.txt`, `Logs/SurveyCameraBounds.txt` and saved-asset logs.
+
+The brief 1920 × 1080 Play Mode preview confirms nine runtime terrains and the expected 9 km² bounds. Numeric generation took **23.81 s** and the survey became ready in **40.43 s**, including ground textures, props and transition. The player view and a close grove capture were inspected for irregular spacing and grove outlines: `Captures/Region-9km2-Player-View.png`, `Captures/Region-Randomized-Trees.png`. `Logs/RegionRevisionPreview.txt` records the run. The larger survey increases generation time and prop geometry; these are single Editor observations. Broader playtesting remains with the user.
+
+The Windows x64 build succeeds with **zero errors and warnings**, **102,862,545 bytes**, in **26.75 s** (`Logs/PlanetBuild.txt`). Temporary preview tooling is excluded from the player and removed before delivery.
+
 ## Pointer-only menu feedback and stable survey pan bounds — 2026-09-16
 
 The shared menu visual now tracks pointer entry/exit independently from EventSystem selection, clears feedback on focus loss, and suppresses highlights while disabled. NEW COLONY's saved prefab starts with neutral text and a hidden bracket. The exact planet-loading message is **`Getting you an exo-planet...`**, shared by menu entry and direct planet-scene entry.

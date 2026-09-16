@@ -43,6 +43,7 @@ namespace Meridian
         public string Id;
         public string ResourceGroupId;
         public Vector2Int ResourceGroupCell;
+        public int ResourceGroupIndex;
         public int WoodAmount;
         public SurfaceObjectKind Kind;
         public Vector3 Position;
@@ -94,13 +95,18 @@ namespace Meridian
     /// <summary>Numerical session data only. Rendering resources belong to the scene, not this record.</summary>
     public sealed class SurfaceWorldData
     {
-        public const string GeneratorVersion="meridian-surface-4";
+        public const string GeneratorVersion="meridian-surface-5";
         public string Version=>GeneratorVersion;
         public int Seed=>Planet.Seed;
         public readonly string RegionId;
         public readonly SurfaceFrame Frame;
         public readonly SurfaceParameters Parameters;
         public readonly Rect Bounds;
+        public int MinimumTile=>-Parameters.initialTilesPerAxis/2;
+        // Odd tile counts put one tile, rather than a four-tile junction, at the geographic origin.
+        public float TileOriginOffset=>(Parameters.initialTilesPerAxis%2)*Parameters.tileSize*.5f;
+        public Vector2 TileOrigin(Vector2Int address)=>new Vector2(address.x*Parameters.tileSize-TileOriginOffset,address.y*Parameters.tileSize-TileOriginOffset);
+        public Vector2Int TileOwner(Vector2 point)=>new Vector2Int(Mathf.FloorToInt((point.x+TileOriginOffset)/Parameters.tileSize),Mathf.FloorToInt((point.y+TileOriginOffset)/Parameters.tileSize));
         public SurfaceTileData[] Tiles {get;internal set;}
         public SurfaceObjectData[] Objects {get;internal set;}
         public TreeGroveData[] TreeGroves {get;internal set;}
@@ -117,7 +123,8 @@ namespace Meridian
         {
             Planet=planet;Frame=frame;Parameters=parameters;
             RegionId=$"{planet.Seed}:{Mathf.RoundToInt(frame.anchor.x*1000000)}:{Mathf.RoundToInt(frame.anchor.y*1000000)}:{Mathf.RoundToInt(frame.anchor.z*1000000)}";
-            Bounds=new Rect(-parameters.tileSize,-parameters.tileSize,2*parameters.tileSize,2*parameters.tileSize);
+            float size=parameters.tileSize*parameters.initialTilesPerAxis;
+            Bounds=new Rect(-size*.5f,-size*.5f,size,size);
             Geography=new SurfaceGenerator.Geography(planet,frame,parameters);
         }
         public SurfaceSample Sample(float x,float z)=>SurfaceGenerator.Sample(this,x,z);

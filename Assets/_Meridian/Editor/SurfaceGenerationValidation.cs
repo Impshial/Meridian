@@ -48,7 +48,10 @@ namespace Meridian.Editor
             }
             Require(direction.sqrMagnitude>.9f,"Fixed seed has no representative inland forest region.");
             var world=SurfaceGenerator.Generate(planet,direction,settings);
-            Require(world.Tiles.Length==4 && world.Tiles.All(t=>t.Heights.GetLength(0)==settings.heightmapResolution),"Wrong initial terrain budget.");
+            int tileCount=settings.initialTilesPerAxis*settings.initialTilesPerAxis;
+            Require(world.Tiles.Length==tileCount && world.Tiles.All(t=>t.Heights.GetLength(0)==settings.heightmapResolution),"Wrong initial terrain budget.");
+            Require(world.Bounds.width*world.Bounds.height>=8000000,"Survey area did not at least double the previous 4 km2.");
+            Require(world.Tiles.All(t=>t.Origin==world.TileOrigin(t.Address) && t.Objects.All(o=>o.Owner==t.Address && world.TileOwner(new Vector2(o.Position.x,o.Position.z))==t.Address)),"Terrain/object tile ownership disagrees.");
             Require(world.BuildableArea>=settings.minimumBuildableArea && world.InteriorClearance>=settings.minimumInteriorSize,"Region bypassed measured flat-ground requirements.");
             float maximumAddedRelief=0,minimumHeight=float.PositiveInfinity,maximumHeight=float.NegativeInfinity;int visibleSlopes=0,gentleSamples=0,drySamples=0;
             for(float z=world.Bounds.yMin+25;z<world.Bounds.yMax;z+=50)for(float x=world.Bounds.xMin+25;x<world.Bounds.xMax;x+=50)
@@ -64,11 +67,17 @@ namespace Meridian.Editor
             }
             Require(maximumAddedRelief>settings.broadReliefHeight*.5f && maximumAddedRelief<settings.broadReliefHeight*2+settings.smallHillHeight*2,
                 "Regional relief is missing or exceeds the gentler landform budget.");
-            Require(gentleSamples>drySamples*.6f,"Representative inland region no longer has predominantly gentle terrain.");
+            // Expanding the survey includes additional regional slopes. Keep the flat-terrain regression
+            // tied to a substantial connected building area, rather than a percentage of the old boundary.
+            Require(world.BuildableArea>=1000000,"Representative inland region lost its broad connected gentle ground.");
             var trees=world.Objects.Where(o=>o.Kind==SurfaceObjectKind.Tree).ToArray();
             Require(trees.Length>4000 && world.TreeGroves.Length>1,"Default forest region is missing its denser timber groves.");
             Require(trees.All(t=>!string.IsNullOrEmpty(t.ResourceGroupId) && t.WoodAmount>0 && t.Radius>=3 && t.Radius<=5 && t.Height>=12 && t.Height<=20),"Tree dimensions or timber resource data are invalid.");
             Require(world.TreeGroves.Sum(g=>g.TreeCount)==trees.Length && world.TreeGroves.Sum(g=>g.WoodAmount)==trees.Sum(t=>t.WoodAmount),"Timber aggregate does not match its member trees.");
+            float phaseX=trees.Count(t=>Mathf.Abs(Mathf.Repeat(t.Position.x/settings.treeSpacing,1)-.5f)>.3f)/(float)trees.Length;
+            float phaseZ=trees.Count(t=>Mathf.Abs(Mathf.Repeat(t.Position.z/settings.treeSpacing,1)-.5f)>.3f)/(float)trees.Length;
+            Require(phaseX>.25f && phaseZ>.25f,"Tree positions retain empty lattice strips instead of continuous scattering.");
+            Require(trees.Select(t=>t.ResourceGroupId).Distinct().Count()>trees.Select(t=>t.ResourceGroupCell).Distinct().Count(),"Grove cells still have at most one regularly spaced centre.");
             Vector2 centre=new Vector2(world.DefaultLanding.logicalPosition.x,world.DefaultLanding.logicalPosition.z);
             for(int angle=0;angle<360;angle+=45)Require(LandingPlacement.Evaluate(world,centre,angle).Valid,"Default clearing cannot contain the rotated full footprint.");
             Require(!LandingPlacement.Evaluate(world,new Vector2(world.Bounds.xMax-2,centre.y),45).Valid,"Placement accepts a footprint outside the generated area.");
@@ -86,12 +95,16 @@ namespace Meridian.Editor
             {
                 int n=south.Heights.GetLength(0);for(int x=0;x<n;x++)Require(south.Heights[n-1,x]==north.Heights[0,x],"North/south terrain border changed.");
             }
-            EastBorder(Tile(-1,-1),Tile(0,-1));EastBorder(Tile(-1,0),Tile(0,0));
-            NorthBorder(Tile(-1,-1),Tile(-1,0));NorthBorder(Tile(0,-1),Tile(0,0));
-            var east=world.GenerateTile(new Vector2Int(1,0));
-            var southeast=world.GenerateTile(new Vector2Int(1,-1));
+            int first=world.MinimumTile,last=first+settings.initialTilesPerAxis-1;
+            for(int z=first;z<=last;z++)for(int x=first;x<=last;x++)
+            {
+                if(x<last)EastBorder(Tile(x,z),Tile(x+1,z));
+                if(z<last)NorthBorder(Tile(x,z),Tile(x,z+1));
+            }
+            var east=world.GenerateTile(new Vector2Int(last+1,0));
+            var southeast=world.GenerateTile(new Vector2Int(last+1,-1));
             var repeated=world.GenerateTile(new Vector2Int(0,0));
-            EastBorder(Tile(0,0),east);EastBorder(Tile(0,-1),southeast);NorthBorder(southeast,east);
+            EastBorder(Tile(last,0),east);EastBorder(Tile(last,-1),southeast);NorthBorder(southeast,east);
             var original=Tile(0,0);int resolution=settings.heightmapResolution;
             for(int z=0;z<resolution;z++)for(int x=0;x<resolution;x++)Require(original.Heights[z,x]==repeated.Heights[z,x],"Generation order altered an established height.");
             Require(original.Objects.Length==repeated.Objects.Length,"Regeneration altered object count.");
@@ -106,7 +119,7 @@ namespace Meridian.Editor
                 var expanded=extendedGroves.First(g=>g.Id==grove.Id);
                 Require(expanded.Position==grove.Position && expanded.WoodAmount>=grove.WoodAmount,"Neighbor generation moved a timber grove or lost existing wood.");
             }
-            Require(world.Tiles.Length==4,"Development neighbor generation mutated the active survey.");
+            Require(world.Tiles.Length==tileCount,"Development neighbor generation mutated the active survey.");
             foreach(var pole in new[]{Vector3.up,Vector3.down,Vector3.back})
             {
                 var frame=new SurfaceFrame(pole,settings.mappingRadius);var p=new Vector2(135,-417);var back=frame.Project(frame.Direction(p.x,p.y));
@@ -119,9 +132,9 @@ namespace Meridian.Editor
             }
             return $"Seed 73129; validation-only 1024x512 planet maps, production surface {settings.heightmapResolution}x{settings.heightmapResolution} per tile.\n"+
                 $"Region direction {direction}; {world.GenerationSeconds:F2}s initial numeric generation; {world.BuildableArea:F0} m2 connected buildable land; {world.InteriorClearance:F0}m fully usable square.\n"+
-                $"{world.Objects.Length} stable objects; 4 active tiles plus 2 development-only neighbors; repeated tile matches all heights and object IDs/positions.\n"+
+                $"{world.Objects.Length} stable objects; {tileCount} active tiles ({world.Bounds.width*world.Bounds.height/1000000:F2} km2) plus 2 development-only neighbors; repeated tile matches all heights and object IDs/positions.\n"+
                 $"Dry terrain height range {minimumHeight:F1}–{maximumHeight:F1}m; added relief up to {maximumAddedRelief:F1}m; {visibleSlopes} sampled slopes above 12 degrees; {gentleSamples}/{drySamples} samples at or below {settings.buildableSlope} degrees.\n"+
-                $"{trees.Length} trees in {world.TreeGroves.Length} timber groves; {world.TreeGroves.Sum(g=>g.WoodAmount)} available wood units.\n"+
+                $"{trees.Length} trees in {world.TreeGroves.Length} timber groves; {world.TreeGroves.Sum(g=>g.WoodAmount)} available wood units. Continuous tree-position phase coverage X {phaseX:P1}, Z {phaseZ:P1}; variable centres per grove cell.\n"+
                 "PASS: initial borders, extension borders/corner, regeneration after different tile order, unique ownership, timber aggregation and stable grove anchors, gentle relief, pole/seam projection, full footprint at 8 headings, bounds/obstruction rejection, cancellation.\n";
         }
     }

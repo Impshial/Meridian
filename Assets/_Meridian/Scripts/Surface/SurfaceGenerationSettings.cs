@@ -10,6 +10,7 @@ namespace Meridian
         public float mappingRadius=30000;
         public float elevationScale=450;
         public float tileSize=1000;
+        [Range(2,4)] public int initialTilesPerAxis=3;
         public int heightmapResolution=513;
         public int alphamapResolution=128;
         public float minimumTerrainHeight=-400;
@@ -47,6 +48,7 @@ namespace Meridian
         public SurfaceParameters Snapshot()=>new SurfaceParameters {
             mappingRadius=Mathf.Clamp(mappingRadius,10000,100000), elevationScale=Mathf.Clamp(elevationScale,100,2000),
             tileSize=Mathf.Clamp(tileSize,500,2000), heightmapResolution=Mathf.Clamp(Mathf.ClosestPowerOfTwo(heightmapResolution-1),128,1024)+1,
+            initialTilesPerAxis=Mathf.Clamp(initialTilesPerAxis,2,4),
             alphamapResolution=Mathf.Clamp(Mathf.ClosestPowerOfTwo(alphamapResolution),32,256),
             minimumTerrainHeight=Mathf.Min(-50,minimumTerrainHeight), terrainHeightRange=Mathf.Max(2400,terrainHeightRange),
             broadReliefHeight=Mathf.Clamp(broadReliefHeight,0,220),landformSpacing=Mathf.Clamp(landformSpacing,450,1000),colonyPlateauHeight=Mathf.Clamp(colonyPlateauHeight,0,80),
@@ -69,7 +71,7 @@ namespace Meridian
         public float mappingRadius,elevationScale,tileSize,minimumTerrainHeight,terrainHeightRange;
         public float broadReliefHeight,landformSpacing,colonyPlateauHeight;
         public float smallHillHeight,smallHillSpacing;
-        public int heightmapResolution,alphamapResolution;
+        public int heightmapResolution,alphamapResolution,initialTilesPerAxis;
         public float minimumRiverWidth,maximumRiverWidth;
         public float minimumBuildableArea,minimumInteriorSize,buildableSlope,buildableCellSize,plainRadius,plainBlend,objectCellSize;
         public float groveSpacing,groveRadius,treeSpacing;
