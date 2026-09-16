@@ -42,6 +42,7 @@ namespace Meridian.Editor
             finally{PrefabUtility.UnloadPrefabContents(transitionContents);}
             var transition=AssetDatabase.LoadAssetAtPath<GameObject>(transitionPath).GetComponent<ScreenTransition>();
             var terrain=Material("SurveyTerrain","Universal Render Pipeline/Terrain/Lit",Color.white);
+            terrain.EnableKeyword("_NORMALMAP");terrain.EnableKeyword("_MASKMAP");EditorUtility.SetDirty(terrain);
             var water=Material("SurveyWater","Universal Render Pipeline/Lit",new Color(.065f,.26f,.30f,.82f));
             water.SetFloat("_Surface",1);water.SetFloat("_Blend",0);water.SetFloat("_ZWrite",0);
             water.SetFloat("_SrcBlend",(float)BlendMode.SrcAlpha);water.SetFloat("_DstBlend",(float)BlendMode.OneMinusSrcAlpha);

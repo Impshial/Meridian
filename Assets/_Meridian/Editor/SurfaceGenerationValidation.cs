@@ -62,7 +62,7 @@ namespace Meridian.Editor
             }
             Require(maximumAddedRelief>settings.broadReliefHeight*.50f && visibleSlopes>20,"Regional landforms have insufficient readable relief outside the landing plain.");
             var trees=world.Objects.Where(o=>o.Kind==SurfaceObjectKind.Tree).ToArray();
-            Require(trees.Length>100 && world.TreeGroves.Length>1,"Forest region has no useful timber groves.");
+            Require(trees.Length>4000 && world.TreeGroves.Length>1,"Default forest region is missing its denser timber groves.");
             Require(trees.All(t=>!string.IsNullOrEmpty(t.ResourceGroupId) && t.WoodAmount>0 && t.Radius>=3 && t.Radius<=5 && t.Height>=12 && t.Height<=20),"Tree dimensions or timber resource data are invalid.");
             Require(world.TreeGroves.Sum(g=>g.TreeCount)==trees.Length && world.TreeGroves.Sum(g=>g.WoodAmount)==trees.Sum(t=>t.WoodAmount),"Timber aggregate does not match its member trees.");
             Vector2 centre=new Vector2(world.DefaultLanding.logicalPosition.x,world.DefaultLanding.logicalPosition.z);

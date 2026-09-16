@@ -1,5 +1,19 @@
 # Validation
 
+## Small hills, denser trees and ground materials — 2026-09-16
+
+Surface version 3 keeps the large regional landforms and adds smooth, compact hills in all dry biomes: nominal 18 m height and 210 m spacing, with flat gaps between them. The protected plain radius drops from 260 m to 190 m, retaining a 180 m transition and the same minimum buildable-area criteria. Hills survive on the plateau shoulders while the central landing area and water boundaries remain protected.
+
+Tree spacing within groves drops from 18 m to an independent 11 m lattice. Rocks and mineral deposits keep their existing spacing. On the same representative seed/location, the revised survey contains **6,930 trees**, compared with **2,383** in version 2 (**2.9×**). Group quantities still match their individual trees.
+
+The five ground layers now have seamless 512 × 512 albedo, normal and occlusion/smoothness maps, mipmaps, and 8 m physical repeats. Grass/soil variation, mineral grains, rock joints and snow replace the old striped pattern. Texture creation runs in batches and owns its resources through the surface scene. Terrain normal/mask shader variants are retained in the saved material, and Editor entry waits for asynchronous shader compilation under the loading cover.
+
+The focused numeric check passed: **10.44 s**, **151,800 m²** connected gentle land, a **290 m** usable square, matching neighboring tile edges, deterministic objects and timber totals, and valid deployment clearance. This uses seed 73129, the existing representative inland region, production 513-height tiles and validation-only 1024 × 512 planet maps. No broad biome/input sweep was added.
+
+The final visual preview passed its resource checks and generated numerically in **10.31 s**. Saved-asset checks pass. The Windows x64 build succeeds with **zero errors and warnings**, **102,858,321 bytes**, in **42.70 s**. Temporary preview tools are removed before delivery.
+
+Local evidence: `Logs/SurfaceGenerationValidation.txt`, `Logs/TerrainDetailPreview.txt`, `Captures/Terrain-Small-Hills-Dense-Trees.png` and `Captures/Terrain-Ground-Detail.png`. The preview checks all five albedo/normal/surface sets and inspects both the overhead landscape and close ground. Ground texture payload is approximately **20 MiB** including mipmaps. These remain procedural materials; trees and the dropship are still placeholder meshes.
+
 ## Surface relief, timber and navigation correction — 2026-09-16
 
 Surface generator `meridian-surface-2` replaces small undulations with broad hills, shelves and a raised colony plateau. Default added landform height is 100 m with 650 m spacing; the safe plain is lifted 35 m and blends through a 220 m ramp. Sub-metre roughness is reduced. Exposed stone, lower-angle lighting and survey-distance shadows make slopes readable. Placement still checks the same actual terrain heightfield and full footprint; failure text now reports the measured slope or height difference instead of suggesting that absolute altitude is invalid.

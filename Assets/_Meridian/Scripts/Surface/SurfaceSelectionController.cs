@@ -84,11 +84,19 @@ namespace Meridian
             try
             {
                 PrepareView();
-                presentation.AddSurveyMarkers(World);presentation.Ready();IsReady=true;
-                UpdatePresentation();
-                Debug.Log($"Meridian landing survey ready: seed {World.Seed}, {World.Version}, {World.Tiles.Length} tiles, {World.Parameters.heightmapResolution} heights/tile, {World.BuildableArea:F0} m² connected buildable area, {World.GenerationSeconds:F2}s numeric generation.");
+                presentation.AddSurveyMarkers(World);presentation.Ready();
             }
             catch(Exception error){Fail("The survey controls could not be prepared. Return to the planet and try again.",error);}
+            if(GenerationFailed)yield break;
+            // Render the new camera under the cover before declaring readiness. Fresh terrain shader
+            // variants compile asynchronously in the Editor; exposing them early can reveal empty ground.
+            yield return new WaitForEndOfFrame();yield return null;
+#if UNITY_EDITOR
+            while(UnityEditor.ShaderUtil.anythingCompiling)yield return null;
+#endif
+            if(token.IsCancellationRequested || !session || revision!=session.RegionRevision)yield break;
+            IsReady=true;UpdatePresentation();
+            Debug.Log($"Meridian landing survey ready: seed {World.Seed}, {World.Version}, {World.Tiles.Length} tiles, {World.Parameters.heightmapResolution} heights/tile, {World.BuildableArea:F0} m² connected buildable area, {World.GenerationSeconds:F2}s numeric generation.");
         }
         void PrepareView()
         {

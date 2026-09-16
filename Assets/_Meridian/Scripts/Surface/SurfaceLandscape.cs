@@ -16,7 +16,8 @@ namespace Meridian
         public IReadOnlyList<TerrainCollider> Colliders=>colliders;
         public IEnumerator Build(SurfaceWorldData world,Material terrainMaterial,Material waterMaterial)
         {
-            TerrainLayer[] layers=GroundLayers();
+            TerrainLayer[] layers=null;
+            yield return SurfaceGroundTextures.Create(resource=>owned.Add(resource),created=>layers=created);
             foreach(var tile in world.Tiles)
             {
                 var data=Own(new TerrainData{name=$"Survey Terrain {tile.Address.x},{tile.Address.y}",heightmapResolution=tile.Heights.GetLength(0),
@@ -53,30 +54,6 @@ namespace Meridian
             foreach(var collider in colliders)if(collider && collider.Raycast(ray,out var candidate,10000) && candidate.distance<distance)
             {found=true;distance=candidate.distance;hit=candidate;}
             return found;
-        }
-        TerrainLayer[] GroundLayers()
-        {
-            var colors=new[]{new Color(.25f,.32f,.16f),new Color(.56f,.46f,.29f),new Color(.31f,.32f,.30f),new Color(.79f,.83f,.82f),new Color(.25f,.22f,.15f)};
-            var names=new[]{"Grass and forest soil","Dry sand","Exposed stone","Snow","Damp earth"};
-            var result=new TerrainLayer[5];
-            for(int layer=0;layer<5;layer++)
-            {
-                const int n=128;var tex=Own(new Texture2D(n,n,TextureFormat.RGBA32,true,false){name="Survey "+names[layer],wrapMode=TextureWrapMode.Repeat,filterMode=FilterMode.Trilinear,anisoLevel=4});
-                var pixels=new Color32[n*n];
-                for(int z=0;z<n;z++)for(int x=0;x<n;x++)
-                {
-                    // Integer-period harmonics make these small ground textures exactly repeatable.
-                    float a=x*2*Mathf.PI/n,b=z*2*Mathf.PI/n;
-                    uint hash=(uint)(x*73856093 ^ z*19349663 ^ layer*83492791);hash^=hash>>13;hash*=1274126177u;
-                    float grain=(hash&255)/255f-.5f;
-                    float variation=Mathf.Sin(a*13+Mathf.Sin(b*5))*.035f+Mathf.Cos(b*17+Mathf.Cos(a*7))*.025f+grain*.07f;
-                    pixels[z*n+x]=colors[layer]*Mathf.Clamp(1+variation*3,.7f,1.3f);
-                }
-                tex.SetPixels32(pixels);tex.Apply(true,true);
-                var terrainLayer=Own(new TerrainLayer{name=names[layer],diffuseTexture=tex,tileSize=new Vector2(10,10),smoothness=layer==3?.15f:.04f,metallic=0});
-                result[layer]=terrainLayer;
-            }
-            return result;
         }
         IEnumerator BuildProps(SurfaceWorldData world,Material template)
         {

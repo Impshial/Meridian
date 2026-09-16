@@ -172,6 +172,10 @@ namespace Meridian
                 float target=world.PlainHeight+Noise(world.Seed,x/180,z/180,4)*.10f;
                 height=Mathf.Lerp(height,target,plain);
             }
+            // Smaller landforms survive outside the protected building core, including on the wider
+            // plateau shoulders. Their compact support leaves level gaps instead of noisy rough ground.
+            float coreClearance=world.ShapePlain?Smooth(p.plainRadius,p.plainRadius+40,(point-world.PlainCentre).magnitude):1;
+            height+=SmallHills(world,x,z)*coreClearance*Smooth(15,90,waterDistance);
             if(mappedKind==PlanetWater.Ocean || mappedKind==PlanetWater.Lake)
             {
                 // Follow the same smoothed mapped shoreline, including a gentle shore profile on its dry side.
@@ -228,7 +232,8 @@ namespace Meridian
                     float snow=1-Smooth(.13f,.24f,sample.Temperature),sand=Smooth(.38f,.60f,sample.Temperature)*(1-Smooth(.30f,.43f,sample.Moisture));
                     float slope=world.Slope(wx,wz),rock=Smooth(12,29,slope)*.88f;
                     if(sample.Biome==PlanetBiome.Rock)rock=Mathf.Max(rock,.6f);
-                    float wet=(1-Smooth(0,15,sample.WaterDistance))*.8f;
+                    float soilPatch=Smooth(-.30f,.60f,Noise(world.Seed,wx/85,wz/85,93))*.35f*(1-snow)*(1-sand)*(1-rock);
+                    float wet=Mathf.Max((1-Smooth(0,15,sample.WaterDistance))*.8f,soilPatch);
                     float grass=Mathf.Max(.03f,(1-snow)*(1-sand)*(1-rock));
                     float sum=grass+sand+rock+snow+wet;
                     tile.Layers[z,x,0]=grass/sum;tile.Layers[z,x,1]=sand/sum;tile.Layers[z,x,2]=rock/sum;
@@ -298,8 +303,7 @@ namespace Meridian
                     var owner=new Vector2Int(Mathf.FloorToInt(wx/p.tileSize),Mathf.FloorToInt(wz/p.tileSize));
                     if(owner!=address || (new Vector2(wx,wz)-world.PlainCentre).sqrMagnitude<90*90)continue;
                     var sample=Sample(world,wx,wz);if(!sample.IsLand || sample.WaterDistance<6 || world.Slope(wx,wz)>34)continue;
-                    float roll=Random01(world.Seed,x,z,12);SurfaceObjectKind kind;float scale,radius,height=0;
-                    string groupId=null;Vector2Int groupCell=default;int wood=0;
+                    float roll=Random01(world.Seed,x,z,12);SurfaceObjectKind kind;float scale,radius;
                     if(roll<.0045f)
                     {
                         kind=sample.Biome==PlanetBiome.Snow?SurfaceObjectKind.Ice:Random01(world.Seed,x,z,13)>.5f?SurfaceObjectKind.Iron:SurfaceObjectKind.Copper;
@@ -307,20 +311,52 @@ namespace Meridian
                     }
                     else if(roll<.075f || (sample.Biome==PlanetBiome.Rock && roll<.32f))
                     {kind=SurfaceObjectKind.Rock;scale=Mathf.Lerp(1,3,Random01(world.Seed,x,z,14));radius=scale;}
-                    else
-                    {
-                        float grove=GroveStrength(world,wx,wz,sample,out groupCell);
-                        if(grove<=0 || roll>=.075f+grove*.83f)continue;
-                        kind=SurfaceObjectKind.Tree;float growth=Random01(world.Seed,x,z,14);
-                        radius=Mathf.Lerp(3,5,growth);height=Mathf.Lerp(12,20,growth);scale=height/16;
-                        wood=Mathf.RoundToInt(radius*height*.8f);groupId=GroveId(world,groupCell);
-                    }
+                    else continue;
                     result.Add(new SurfaceObjectData {Id=$"{world.RegionId}:{x}:{z}:{(int)kind}",Owner=owner,Kind=kind,
-                        Position=new Vector3(wx,sample.Height,wz),Radius=radius,Scale=scale,Height=height,Yaw=Random01(world.Seed,x,z,15)*360,
-                        ResourceGroupId=groupId,ResourceGroupCell=groupCell,WoodAmount=wood});
+                        Position=new Vector3(wx,sample.Height,wz),Radius=radius,Scale=scale,Yaw=Random01(world.Seed,x,z,15)*360});
+                }
+            }
+            // Trees have a denser lattice of their own; mineral deposits and rocks retain their spacing.
+            cell=p.treeSpacing;
+            minX=Mathf.FloorToInt(address.x*p.tileSize/cell)-1;maxX=Mathf.CeilToInt((address.x+1)*p.tileSize/cell)+1;
+            minZ=Mathf.FloorToInt(address.y*p.tileSize/cell)-1;maxZ=Mathf.CeilToInt((address.y+1)*p.tileSize/cell)+1;
+            for(int z=minZ;z<=maxZ;z++)
+            {
+                token.ThrowIfCancellationRequested();
+                for(int x=minX;x<=maxX;x++)
+                {
+                    float wx=(x+.25f+.5f*Random01(world.Seed,x,z,80))*cell,wz=(z+.25f+.5f*Random01(world.Seed,x,z,81))*cell;
+                    var owner=new Vector2Int(Mathf.FloorToInt(wx/p.tileSize),Mathf.FloorToInt(wz/p.tileSize));
+                    if(owner!=address || (new Vector2(wx,wz)-world.PlainCentre).sqrMagnitude<90*90)continue;
+                    var sample=Sample(world,wx,wz);if(!sample.IsLand || sample.WaterDistance<6)continue;
+                    float grove=GroveStrength(world,wx,wz,sample,out Vector2Int groupCell);
+                    if(grove<=0 || Random01(world.Seed,x,z,82)>=grove*.90f || world.Slope(wx,wz)>34)continue;
+                    float growth=Random01(world.Seed,x,z,83),radius=Mathf.Lerp(3,5,growth),height=Mathf.Lerp(12,20,growth);
+                    result.Add(new SurfaceObjectData {Id=$"{world.RegionId}:tree:{x}:{z}",Owner=owner,Kind=SurfaceObjectKind.Tree,
+                        Position=new Vector3(wx,sample.Height,wz),Radius=radius,Scale=height/16,Height=height,Yaw=Random01(world.Seed,x,z,84)*360,
+                        ResourceGroupId=GroveId(world,groupCell),ResourceGroupCell=groupCell,WoodAmount=Mathf.RoundToInt(radius*height*.8f)});
                 }
             }
             return result.ToArray();
+        }
+
+        static float SmallHills(SurfaceWorldData world,float x,float z)
+        {
+            float spacing=world.Parameters.smallHillSpacing,result=0;
+            int cx=Mathf.FloorToInt(x/spacing),cz=Mathf.FloorToInt(z/spacing);
+            for(int iz=cz-1;iz<=cz+1;iz++)for(int ix=cx-1;ix<=cx+1;ix++)
+            {
+                uint h=Hash(world.Seed,ix,iz,71),k=Hash(world.Seed,ix,iz,72);
+                float Unit(uint value)=>(value&1023)/1023f;
+                float px=(ix+.5f+(Unit(h)-.5f)*.28f)*spacing,pz=(iz+.5f+(Unit(h>>10)-.5f)*.28f)*spacing;
+                float radius=spacing*Mathf.Lerp(.35f,.48f,Unit(h>>20));
+                float dx=(x-px)/radius,dz=(z-pz)/(radius*Mathf.Lerp(.80f,1.15f,Unit(k)));
+                float q=dx*dx+dz*dz;if(q>=1)continue;
+                // Smooth zero slope at the summit and foot; no biome gate, so dry regions all get hills.
+                float falloff=1-q;
+                result+=world.Parameters.smallHillHeight*Mathf.Lerp(.70f,1.25f,Unit(k>>10))*falloff*falloff;
+            }
+            return result;
         }
 
         static float Landforms(SurfaceWorldData world,float x,float z)
