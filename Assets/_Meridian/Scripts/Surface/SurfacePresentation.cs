@@ -41,7 +41,7 @@ namespace Meridian
             title.text="L A N D I N G   S U R V E Y";title.color=new Color(1,.75f,.43f);
             var controls=Label("Camera controls",root,16,TextAlignmentOptions.TopLeft);
             Layout(controls.rectTransform,new Vector2(0,1),new Vector2(46,-85),new Vector2(1700,50),new Vector2(0,1));
-            controls.text="Middle-drag / WASD move   ·   Wheel tilt   ·   Q / E rotate 45°   ·   + / - zoom   ·   Home reset";
+            controls.text="Middle-drag / WASD move   ·   Wheel tilt   ·   Shift + wheel zoom   ·   Q / E rotate 45°   ·   Home reset";
             controls.color=new Color(.81f,.85f,.86f);
             if(!EventSystem.current)
             {

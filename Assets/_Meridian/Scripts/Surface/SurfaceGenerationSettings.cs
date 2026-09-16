@@ -8,17 +8,17 @@ namespace Meridian
     {
         [Header("Geographic mapping — one local unit is one metre")]
         public float mappingRadius=30000;
-        public float elevationScale=1200;
+        public float elevationScale=450;
         public float tileSize=1000;
         public int heightmapResolution=513;
         public int alphamapResolution=128;
         public float minimumTerrainHeight=-400;
         public float terrainHeightRange=2400;
         [Header("Readable regional landforms")]
-        public float broadReliefHeight=100;
+        public float broadReliefHeight=12;
         public float landformSpacing=650;
-        public float colonyPlateauHeight=35;
-        public float smallHillHeight=18;
+        public float colonyPlateauHeight=3;
+        public float smallHillHeight=2.5f;
         public float smallHillSpacing=210;
         [Header("Physical watercourses")]
         public float minimumRiverWidth=9;
@@ -28,8 +28,8 @@ namespace Meridian
         public float minimumInteriorSize=200;
         public float buildableSlope=5;
         public float buildableCellSize=10;
-        public float plainRadius=190;
-        public float plainBlend=180;
+        public float plainRadius=260;
+        public float plainBlend=300;
         public float objectCellSize=18;
         [Header("Timber groves")]
         public float groveSpacing=320;
@@ -49,8 +49,8 @@ namespace Meridian
             tileSize=Mathf.Clamp(tileSize,500,2000), heightmapResolution=Mathf.Clamp(Mathf.ClosestPowerOfTwo(heightmapResolution-1),128,1024)+1,
             alphamapResolution=Mathf.Clamp(Mathf.ClosestPowerOfTwo(alphamapResolution),32,256),
             minimumTerrainHeight=Mathf.Min(-50,minimumTerrainHeight), terrainHeightRange=Mathf.Max(2400,terrainHeightRange),
-            broadReliefHeight=Mathf.Clamp(broadReliefHeight,30,220),landformSpacing=Mathf.Clamp(landformSpacing,450,1000),colonyPlateauHeight=Mathf.Clamp(colonyPlateauHeight,0,80),
-            smallHillHeight=Mathf.Clamp(smallHillHeight,6,35),smallHillSpacing=Mathf.Clamp(smallHillSpacing,150,300),
+            broadReliefHeight=Mathf.Clamp(broadReliefHeight,0,220),landformSpacing=Mathf.Clamp(landformSpacing,450,1000),colonyPlateauHeight=Mathf.Clamp(colonyPlateauHeight,0,80),
+            smallHillHeight=Mathf.Clamp(smallHillHeight,0,35),smallHillSpacing=Mathf.Clamp(smallHillSpacing,150,300),
             minimumRiverWidth=Mathf.Clamp(minimumRiverWidth,4,30),maximumRiverWidth=Mathf.Clamp(Mathf.Max(minimumRiverWidth,maximumRiverWidth),4,60),
             minimumBuildableArea=Mathf.Max(90000,minimumBuildableArea),minimumInteriorSize=Mathf.Max(200,minimumInteriorSize),
             buildableSlope=Mathf.Clamp(buildableSlope,1,10),buildableCellSize=Mathf.Clamp(buildableCellSize,5,20),

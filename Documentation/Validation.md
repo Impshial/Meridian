@@ -1,5 +1,17 @@
 # Validation
 
+## Flatter terrain, finer ground detail and Shift-wheel zoom — 2026-09-16
+
+Surface generator `meridian-surface-4` lowers the broad elevation scale from 1,200 to 450 m, added broad relief from 100 to 12 m, small hills from 18 to 2.5 m, and plateau rise from 35 to 3 m. The flat core expands from 190 to 260 m radius with a 300 m shoulder transition. Terrain and drainage share the reduced elevation scale. Tree density and placement limits are preserved.
+
+The same representative seed 73129 inland region passes the focused numeric check with production 513-height tiles and validation-only 1024 × 512 planet maps. Numeric generation took **10.02 s**. Connected gentle terrain increases from version 3's **151,800 m² to 2,098,300 m²**, with a **760 m** usable interior square. Sampled dry heights are **14.9–137.8 m**; added relief reaches **14.7 m**, previously 121.2 m. Coarse samples over 12° fall from **1,089 to 79**; **895/1,452** dry inland samples are at or below 5°. Tile continuity, regeneration, placement and resource checks pass; the flatter region supports **7,742 trees in 41 groves** and **405,532 wood units**.
+
+Ground materials now contain five **1024 × 1024** albedo/normal/surface sets, each with 11 mip levels and an 8 m repeat. Tapered grass leaves and mineral fragments add detail beyond the finer noise sampling. Their wrapped stamps affect albedo and matching normal-map heights. GPU pixel payload is approximately **80 MiB**, up from 20 MiB. The 1920 × 1080 Play Mode preview generated numerically in **10.49 s** and became ready in **25.66 s** including terrain, textures, props and transition. These are single Editor observations.
+
+The brief input check exercises the installed Input System: left Shift + wheel zooms in, right Shift + wheel zooms out, neither changes pitch/heading, unmodified wheel tilts without changing zoom, and excessive inward scrolling clamps at 95 m. The HUD and controls documentation include the new binding. Overview and close ground captures were inspected; broader playtesting remains with the user.
+
+Saved assets pass. The Windows x64 build succeeds with **zero errors and warnings**, **102,860,929 bytes**, in **26.43 s**. Local evidence: `Logs/SurfaceGenerationValidation.txt`, `Logs/TerrainRevisionPreview.txt`, `Logs/PlanetBuild.txt`, `Captures/Terrain-Flatter-Overview.png` and `Captures/Terrain-Finer-Ground.png`. Temporary preview code is excluded from the player and removed before delivery.
+
 ## Small hills, denser trees and ground materials — 2026-09-16
 
 Surface version 3 keeps the large regional landforms and adds smooth, compact hills in all dry biomes: nominal 18 m height and 210 m spacing, with flat gaps between them. The protected plain radius drops from 260 m to 190 m, retaining a 180 m transition and the same minimum buildable-area criteria. Hills survive on the plateau shoulders while the central landing area and water boundaries remain protected.

@@ -50,17 +50,21 @@ namespace Meridian.Editor
             var world=SurfaceGenerator.Generate(planet,direction,settings);
             Require(world.Tiles.Length==4 && world.Tiles.All(t=>t.Heights.GetLength(0)==settings.heightmapResolution),"Wrong initial terrain budget.");
             Require(world.BuildableArea>=settings.minimumBuildableArea && world.InteriorClearance>=settings.minimumInteriorSize,"Region bypassed measured flat-ground requirements.");
-            float maximumAddedRelief=0,minimumHeight=float.PositiveInfinity,maximumHeight=float.NegativeInfinity;int visibleSlopes=0;
+            float maximumAddedRelief=0,minimumHeight=float.PositiveInfinity,maximumHeight=float.NegativeInfinity;int visibleSlopes=0,gentleSamples=0,drySamples=0;
             for(float z=world.Bounds.yMin+25;z<world.Bounds.yMax;z+=50)for(float x=world.Bounds.xMin+25;x<world.Bounds.xMax;x+=50)
             {
                 var sample=world.Sample(x,z);if(!sample.IsLand || sample.WaterDistance<140)continue;
                 minimumHeight=Mathf.Min(minimumHeight,sample.Height);maximumHeight=Mathf.Max(maximumHeight,sample.Height);
-                if(world.Slope(x,z)>12)visibleSlopes++;
+                float slope=world.Slope(x,z);drySamples++;
+                if(slope>12)visibleSlopes++;
+                if(slope<=settings.buildableSlope)gentleSamples++;
                 if((new Vector2(x,z)-world.PlainCentre).magnitude<settings.plainRadius+settings.plainBlend)continue;
                 float sharedHeight=planet.Sample(world.Frame.Direction(x,z)).Elevation*settings.elevationScale;
                 maximumAddedRelief=Mathf.Max(maximumAddedRelief,sample.Height-sharedHeight);
             }
-            Require(maximumAddedRelief>settings.broadReliefHeight*.50f && visibleSlopes>20,"Regional landforms have insufficient readable relief outside the landing plain.");
+            Require(maximumAddedRelief>settings.broadReliefHeight*.5f && maximumAddedRelief<settings.broadReliefHeight*2+settings.smallHillHeight*2,
+                "Regional relief is missing or exceeds the gentler landform budget.");
+            Require(gentleSamples>drySamples*.6f,"Representative inland region no longer has predominantly gentle terrain.");
             var trees=world.Objects.Where(o=>o.Kind==SurfaceObjectKind.Tree).ToArray();
             Require(trees.Length>4000 && world.TreeGroves.Length>1,"Default forest region is missing its denser timber groves.");
             Require(trees.All(t=>!string.IsNullOrEmpty(t.ResourceGroupId) && t.WoodAmount>0 && t.Radius>=3 && t.Radius<=5 && t.Height>=12 && t.Height<=20),"Tree dimensions or timber resource data are invalid.");
@@ -116,9 +120,9 @@ namespace Meridian.Editor
             return $"Seed 73129; validation-only 1024x512 planet maps, production surface {settings.heightmapResolution}x{settings.heightmapResolution} per tile.\n"+
                 $"Region direction {direction}; {world.GenerationSeconds:F2}s initial numeric generation; {world.BuildableArea:F0} m2 connected buildable land; {world.InteriorClearance:F0}m fully usable square.\n"+
                 $"{world.Objects.Length} stable objects; 4 active tiles plus 2 development-only neighbors; repeated tile matches all heights and object IDs/positions.\n"+
-                $"Dry terrain height range {minimumHeight:F1}–{maximumHeight:F1}m; added relief up to {maximumAddedRelief:F1}m; {visibleSlopes} sampled slopes above 12 degrees.\n"+
+                $"Dry terrain height range {minimumHeight:F1}–{maximumHeight:F1}m; added relief up to {maximumAddedRelief:F1}m; {visibleSlopes} sampled slopes above 12 degrees; {gentleSamples}/{drySamples} samples at or below {settings.buildableSlope} degrees.\n"+
                 $"{trees.Length} trees in {world.TreeGroves.Length} timber groves; {world.TreeGroves.Sum(g=>g.WoodAmount)} available wood units.\n"+
-                "PASS: initial borders, extension borders/corner, regeneration after different tile order, unique ownership, timber aggregation and stable grove anchors, readable relief, pole/seam projection, full footprint at 8 headings, bounds/obstruction rejection, cancellation.\n";
+                "PASS: initial borders, extension borders/corner, regeneration after different tile order, unique ownership, timber aggregation and stable grove anchors, gentle relief, pole/seam projection, full footprint at 8 headings, bounds/obstruction rejection, cancellation.\n";
         }
     }
 }

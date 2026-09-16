@@ -4,12 +4,13 @@ using UnityEngine.InputSystem;
 
 namespace Meridian
 {
-    /// <summary>Pregame ground survey: grab to pan, wheel to tilt, and discrete heading changes.</summary>
+    /// <summary>Pregame ground survey: grab to pan, wheel to tilt, Shift + wheel to zoom, and discrete heading changes.</summary>
     public sealed class SurveyCamera : MonoBehaviour
     {
         [SerializeField] private float minimumDistance=95,maximumDistance=1250,initialDistance=730;
         [SerializeField] private float minimumPitch=42,maximumPitch=78,panRate=.65f;
         [SerializeField] private float tiltPerTick=3,tiltSmoothing=12;
+        [SerializeField] private float zoomPerTick=.12f;
         private Camera lens;
         private Rect bounds;
         private Func<float,float,float> height;
@@ -68,7 +69,15 @@ namespace Meridian
                             (Application.platform==RuntimePlatform.WindowsPlayer || Application.platform==RuntimePlatform.WindowsEditor)?120f:1f;
                         float ticks=mouse.scroll.ReadValue().y/divisor;
                         if(!float.IsNaN(ticks)&&!float.IsInfinity(ticks))
-                            targetPitch=Mathf.Clamp(targetPitch+Mathf.Clamp(ticks,-20,20)*tiltPerTick,minimumPitch,maximumPitch);
+                        {
+                            ticks=Mathf.Clamp(ticks,-20,20);
+                            bool zoom=keyboard!=null && (keyboard.leftShiftKey.isPressed || keyboard.rightShiftKey.isPressed);
+                            if(zoom)
+                                targetDistance=Mathf.Clamp(targetDistance*Mathf.Exp(-ticks*zoomPerTick),
+                                    Mathf.Min(minimumDistance,SupportedDistance()),SupportedDistance());
+                            else
+                                targetPitch=Mathf.Clamp(targetPitch+ticks*tiltPerTick,minimumPitch,maximumPitch);
+                        }
                     }
                 }
                 if(keyboard!=null)

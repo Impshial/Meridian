@@ -94,7 +94,7 @@ namespace Meridian
     /// <summary>Numerical session data only. Rendering resources belong to the scene, not this record.</summary>
     public sealed class SurfaceWorldData
     {
-        public const string GeneratorVersion="meridian-surface-3";
+        public const string GeneratorVersion="meridian-surface-4";
         public string Version=>GeneratorVersion;
         public int Seed=>Planet.Seed;
         public readonly string RegionId;

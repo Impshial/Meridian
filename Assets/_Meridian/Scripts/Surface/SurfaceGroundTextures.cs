@@ -7,7 +7,7 @@ namespace Meridian
     /// <summary>Seamless ground materials, with physical-scale grain and matching normals/roughness.</summary>
     internal static class SurfaceGroundTextures
     {
-        const int Size=512;
+        const int Size=1024;
         const float RepeatMetres=8;
         public static IEnumerator Create(Action<UnityEngine.Object> own,Action<TerrainLayer[]> finished)
         {
@@ -23,7 +23,7 @@ namespace Meridian
                     {
                         float u=x/(float)Size,v=z/(float)Size;
                         float broad=Noise(u,v,3,seed),warpU=u+Noise(u,v,5,seed+1)*.045f,warpV=v+Noise(u,v,5,seed+2)*.045f;
-                        float patch=Noise(warpU,warpV,11,seed+3),grain=Noise(warpU,warpV,83,seed+4),fine=Random(x,z,seed+5);
+                        float patch=Noise(warpU,warpV,11,seed+3),grain=Noise(warpU,warpV,157,seed+4),fine=Random(x,z,seed+5);
                         Color color;float height,smoothness,occlusion;
                         switch(layer)
                         {
@@ -58,6 +58,7 @@ namespace Meridian
                     }
                     if(z%64==63)yield return null;
                 }
+                yield return GroundDetail(layer,seed,diffuse,heights,mask);
                 for(int z=0;z<Size;z++)
                 {
                     for(int x=0;x<Size;x++)
@@ -81,6 +82,48 @@ namespace Meridian
                 own(terrainLayer);layers[layer]=terrainLayer;yield return null;
             }
             finished(layers);
+        }
+        static IEnumerator GroundDetail(int layer,int seed,Color32[] colors,float[] heights,Color32[] masks)
+        {
+            // Physical features, not just extra noise pixels: short grass leaves and mineral fragments.
+            // Stamping wraps at both tile edges so every mip level remains seamless.
+            bool grass=layer==0;
+            int count=grass?28000:layer==4?14000:7000;
+            for(int feature=0;feature<count;feature++)
+            {
+                float R(int channel)=>Random(feature,channel,seed+31);
+                float cx=R(0)*Size,cz=R(1)*Size,angle=R(2)*Mathf.PI*2;
+                float dx=Mathf.Cos(angle),dz=Mathf.Sin(angle);
+                float length=grass?Mathf.Lerp(5,15,R(3)):Mathf.Lerp(.8f,3.5f,R(3));
+                float width=grass?Mathf.Lerp(.6f,1.3f,R(4)):length*Mathf.Lerp(.45f,.85f,R(4));
+                Color tint;
+                if(grass)
+                    tint=R(5)<.18f?Color.Lerp(new Color(.31f,.285f,.15f),new Color(.49f,.445f,.24f),R(6)):
+                        Color.Lerp(new Color(.12f,.20f,.075f),new Color(.39f,.46f,.21f),R(6));
+                else if(layer==1)tint=Color.Lerp(new Color(.32f,.27f,.20f),new Color(.77f,.71f,.56f),R(6));
+                else if(layer==3)tint=Color.Lerp(new Color(.75f,.82f,.86f),new Color(.98f,.98f,.96f),R(6));
+                else tint=Color.Lerp(new Color(.20f,.195f,.17f),new Color(.48f,.45f,.37f),R(6));
+                float bump=grass?.003f:Mathf.Lerp(.002f,.012f,R(7));
+                int extent=Mathf.CeilToInt(length+width+1);
+                for(int z=Mathf.FloorToInt(cz)-extent;z<=Mathf.CeilToInt(cz)+extent;z++)
+                for(int x=Mathf.FloorToInt(cx)-extent;x<=Mathf.CeilToInt(cx)+extent;x++)
+                {
+                    float rx=x-cx,rz=z-cz,along=(rx*dx+rz*dz)/length;
+                    if(Mathf.Abs(along)>1)continue;
+                    float across=(-rx*dz+rz*dx)/width;
+                    // Tapered, slightly curved leaves; rounded, irregularly proportioned pebbles.
+                    if(grass)across-=.5f*(1-along*along);
+                    float shape=1-along*along-across*across;
+                    if(shape<=0)continue;
+                    float coverage=Smooth(0,.45f,shape);
+                    int i=((z%Size+Size)%Size)*Size+(x%Size+Size)%Size;
+                    colors[i]=Color.Lerp(colors[i],tint,coverage*(grass?.82f:.68f));
+                    heights[i]+=bump*shape;
+                    Color surface=masks[i];surface.g=Mathf.Lerp(surface.g,.9f,coverage);
+                    surface.b=Mathf.Clamp01(heights[i]/.15f);masks[i]=surface;
+                }
+                if(feature%1024==1023)yield return null;
+            }
         }
         static float Noise(float u,float v,int period,int seed)
         {

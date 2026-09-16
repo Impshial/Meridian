@@ -13,16 +13,16 @@ MonoBehaviour:
   m_Name: SurfaceGeneration
   m_EditorClassIdentifier: Assembly-CSharp::Meridian.SurfaceGenerationSettings
   mappingRadius: 30000
-  elevationScale: 1200
+  elevationScale: 450
   tileSize: 1000
   heightmapResolution: 513
   alphamapResolution: 128
   minimumTerrainHeight: -400
   terrainHeightRange: 2400
-  broadReliefHeight: 100
+  broadReliefHeight: 12
   landformSpacing: 650
-  colonyPlateauHeight: 35
-  smallHillHeight: 18
+  colonyPlateauHeight: 3
+  smallHillHeight: 2.5
   smallHillSpacing: 210
   minimumRiverWidth: 9
   maximumRiverWidth: 24
@@ -30,8 +30,8 @@ MonoBehaviour:
   minimumInteriorSize: 200
   buildableSlope: 5
   buildableCellSize: 10
-  plainRadius: 190
-  plainBlend: 180
+  plainRadius: 260
+  plainBlend: 300
   objectCellSize: 18
   groveSpacing: 320
   groveRadius: 125
