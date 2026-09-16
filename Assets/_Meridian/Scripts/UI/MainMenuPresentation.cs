@@ -16,7 +16,7 @@ namespace Meridian
         {
             if(ScreenTransition.Active)return;
             SetupSession.BeginNew();
-            ScreenTransition.Travel(transitionPrefab,"PlanetSelection","Loading Exo-planet...");
+            ScreenTransition.Travel(transitionPrefab,"PlanetSelection",ScreenTransition.PlanetLoadingMessage);
         }
 
         private void Start()

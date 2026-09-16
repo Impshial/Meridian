@@ -34,7 +34,7 @@ namespace Meridian
         void Awake()
         {
             session=SetupSession.Ensure();controls.alpha=0;SetInteraction(false);
-            ScreenTransition.Reveal(transitionPrefab,session.Planet==null?"Loading Exo-planet...":"Returning to Exo-planet...");
+            ScreenTransition.Reveal(transitionPrefab,session.Planet==null?ScreenTransition.PlanetLoadingMessage:"Returning to Exo-planet...");
         }
         IEnumerator Start()
         {

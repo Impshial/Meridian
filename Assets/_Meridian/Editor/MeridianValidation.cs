@@ -28,6 +28,8 @@ namespace Meridian.Editor
                 .SequenceEqual(new[] { "NEW COLONY", "LOAD COLONY", "SETTINGS", "QUIT" }), "Incorrect labels or order.");
             Require(buttons[0].onClick.GetPersistentEventCount() == 1 && buttons[0].onClick.GetPersistentMethodName(0) == "OpenPlanetSelection", "NEW COLONY entry is missing.");
             Require(buttons.Skip(1).All(button => button.onClick.GetPersistentEventCount() == 0), "A placeholder action callback was assigned.");
+            Require(buttons.All(button => button.GetComponentInChildren<CanvasGroup>().alpha == 0), "Saved menu contains a hover bracket before pointer entry.");
+            Require(buttons.All(button => button.GetComponentInChildren<TMP_Text>().color == (Color)new Color32(225,224,219,255)), "Saved menu contains a highlighted idle label.");
             var background = components.OfType<RawImage>().Single();
             Require(background.texture && background.texture.width == 1672 && background.texture.height == 941, "Background resolution changed.");
             Require(background.color == Color.white && !background.raycastTarget, "Background tint or raycast changed.");

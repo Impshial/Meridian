@@ -151,7 +151,7 @@ namespace Meridian.Editor
             // Local contrast when the enlarged globe passes behind these overlay controls.
             var face=go.GetComponent<Image>();face.color=new Color(0,0,0,.62f);
             PrefabUtility.RecordPrefabInstancePropertyModifications(face);
-            go.GetComponent<MenuButtonVisual>().Configure(label,go.GetComponentInChildren<CanvasGroup>(),false);
+            go.GetComponent<MenuButtonVisual>().Configure(label,go.GetComponentInChildren<CanvasGroup>());
             PrefabUtility.RecordPrefabInstancePropertyModifications(rect);PrefabUtility.RecordPrefabInstancePropertyModifications(label);
             return go.GetComponent<Button>();
         }

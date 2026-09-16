@@ -95,7 +95,7 @@ namespace Meridian.Editor
                 rect.anchoredPosition = new Vector2(92f, -(290f + 77f * i));
                 var label = row.GetComponentInChildren<TMP_Text>();
                 label.text = Labels[i];
-                row.GetComponent<MenuButtonVisual>().Configure(label, row.GetComponentInChildren<CanvasGroup>(), i == 0);
+                row.GetComponent<MenuButtonVisual>().Configure(label, row.GetComponentInChildren<CanvasGroup>());
                 buttons[i] = row.GetComponent<Button>();
                 PrefabUtility.RecordPrefabInstancePropertyModifications(rect);
                 PrefabUtility.RecordPrefabInstancePropertyModifications(label);
@@ -343,7 +343,7 @@ namespace Meridian.Editor
             Line("Underline", accentRect, new Vector2(0, -28), new Vector2(292, 1.2f));
             Line("Left Bracket", accentRect, new Vector2(0, -20), new Vector2(1.5f, 16));
             Line("Right Bracket", accentRect, new Vector2(290.5f, -20), new Vector2(1.5f, 16));
-            rect.gameObject.AddComponent<MenuButtonVisual>().Configure(label, accent, false);
+            rect.gameObject.AddComponent<MenuButtonVisual>().Configure(label, accent);
             return rect.gameObject;
         }
 

@@ -131,7 +131,7 @@ namespace Meridian
             var label=go.GetComponentInChildren<TMP_Text>();if(!label)label=Label(title,go.transform,22,TextAlignmentOptions.Center);
             label.text=title;label.characterSpacing=4;label.fontSize=22;
             var button=go.GetComponent<Button>();button.navigation=new Navigation{mode=Navigation.Mode.None};button.onClick=new Button.ButtonClickedEvent();
-            var visual=go.GetComponent<MenuButtonVisual>();if(visual)visual.Configure(label,go.GetComponentInChildren<CanvasGroup>(),false);
+            var visual=go.GetComponent<MenuButtonVisual>();if(visual)visual.Configure(label,go.GetComponentInChildren<CanvasGroup>());
             return button;
         }
         TMP_Text Label(string name,Transform parent,float size,TextAlignmentOptions alignment)

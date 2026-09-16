@@ -40,7 +40,11 @@ namespace Meridian
         {enabledInput=value;middleCapture=false;if(!value){targetDistance=distance;targetPitch=pitch;}}
         public void ResetView()
         {
-            pivot=initialPivot;distance=targetDistance=Mathf.Min(initialDistance,SupportedDistance());
+            pivot=initialPivot;
+            float supported=SupportedDistance();
+            float clearance=Mathf.Min(pivot.x-bounds.xMin,bounds.xMax-pivot.x,pivot.z-bounds.yMin,bounds.yMax-pivot.z)-70;
+            float focusDistance=Mathf.Max(Mathf.Min(minimumDistance,supported),clearance/GroundRadius());
+            distance=targetDistance=Mathf.Min(initialDistance,supported,focusDistance);
             yaw=-25;pitch=targetPitch=Mathf.Clamp(57,minimumPitch,maximumPitch);middleCapture=false;
         }
         void LateUpdate()
@@ -118,40 +122,36 @@ namespace Meridian
         float SupportedDistance()
         {
             if(!lens)return initialDistance;
-            // One distance limit covers every allowed pitch and heading. Tilting therefore never changes zoom.
-            GroundExtents(Quaternion.Euler(minimumPitch,0,0),1,out Vector2 minimum,out Vector2 maximum);
-            float span=Mathf.Max(.01f,(maximum-minimum).magnitude);
-            return Mathf.Max(1,Mathf.Min(maximumDistance,(Mathf.Min(bounds.width,bounds.height)-140)/span));
+            // Reserve the same footprint for every tilt and heading, plus some pan travel at the widest view.
+            float halfSpan=Mathf.Max(1,Mathf.Min(bounds.width,bounds.height)*.5f-70);
+            return Mathf.Max(1,Mathf.Min(maximumDistance,halfSpan*.85f/GroundRadius()));
         }
         void ApplyPose()
         {
             Quaternion orientation=Quaternion.Euler(pitch,yaw,0);
             targetDistance=Mathf.Min(targetDistance,SupportedDistance());distance=Mathf.Min(distance,SupportedDistance());
-            // Reserve the complete ground-facing frustum when panning. A lens over the terrain alone
-            // would still expose tile edges while looking toward the edge of the survey.
-            GroundExtents(orientation,1,out Vector2 minimum,out Vector2 maximum);
             float safeDistance=distance;
-            minimum*=safeDistance;maximum*=safeDistance;
-            pivot.x=Mathf.Clamp(pivot.x,bounds.xMin+70-minimum.x,bounds.xMax-70-maximum.x);
-            pivot.z=Mathf.Clamp(pivot.z,bounds.yMin+70-minimum.y,bounds.yMax-70-maximum.y);
+            // This inset depends on zoom/aspect, never on the current pitch or heading. A point reached
+            // overhead remains valid when tilting or turning at an edge, so ApplyPose cannot relocate it.
+            float inset=70+GroundRadius()*safeDistance;
+            pivot.x=Mathf.Clamp(pivot.x,bounds.xMin+inset,bounds.xMax-inset);
+            pivot.z=Mathf.Clamp(pivot.z,bounds.yMin+inset,bounds.yMax-inset);
             pivot.y=height(pivot.x,pivot.z)+2;
             Vector3 position=pivot-orientation*Vector3.forward*safeDistance;
-            // The ground extents include the lens, so the pivot constraint already keeps its X/Z in bounds.
+            // The footprint includes the lens, so the pivot constraint already keeps its X/Z in bounds.
             // Independently clamping the lens here would change camera heading without a Q/E keypress.
             position.y=Mathf.Max(position.y,height(position.x,position.z)+24);
             lens.transform.SetPositionAndRotation(position,Quaternion.LookRotation(pivot-position,Vector3.up));
         }
-        void GroundExtents(Quaternion orientation,float radius,out Vector2 minimum,out Vector2 maximum)
+        float GroundRadius()
         {
-            Vector3 forward=orientation*Vector3.forward,right=orientation*Vector3.right,up=orientation*Vector3.up;
-            Vector3 origin=-forward*radius;float tangent=Mathf.Tan(lens.fieldOfView*.5f*Mathf.Deg2Rad);
-            minimum=maximum=new Vector2(origin.x,origin.z);
-            for(int x=-1;x<=1;x+=2)for(int y=-1;y<=1;y+=2)
-            {
-                Vector3 ray=forward+right*(x*tangent*lens.aspect)+up*(y*tangent);
-                Vector3 at=origin+ray*(-origin.y/Mathf.Min(-.01f,ray.y));
-                minimum=Vector2.Min(minimum,new Vector2(at.x,at.z));maximum=Vector2.Max(maximum,new Vector2(at.x,at.z));
-            }
+            // On the ground plane, the far corner at minimum pitch has the greatest distance from
+            // the pivot. Its swept circle encloses every allowed tilt and any Q/E heading.
+            float angle=minimumPitch*Mathf.Deg2Rad,sine=Mathf.Sin(angle),cosine=Mathf.Cos(angle);
+            float tangent=Mathf.Tan(lens.fieldOfView*.5f*Mathf.Deg2Rad);
+            float denominator=Mathf.Max(.01f,sine-cosine*tangent);
+            var corner=new Vector2(lens.aspect*tangent*sine,tangent)/denominator;
+            return Mathf.Max(cosine,corner.magnitude);
         }
         void OnApplicationFocus(bool value){focused=value;if(!value)middleCapture=false;}
         void OnDisable()=>middleCapture=false;

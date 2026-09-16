@@ -1,5 +1,15 @@
 # Validation
 
+## Pointer-only menu feedback and stable survey pan bounds — 2026-09-16
+
+The shared menu visual now tracks pointer entry/exit independently from EventSystem selection, clears feedback on focus loss, and suppresses highlights while disabled. NEW COLONY's saved prefab starts with neutral text and a hidden bracket. The exact planet-loading message is **`Getting you an exo-planet...`**, shared by menu entry and direct planet-scene entry.
+
+A brief 1920 × 1080 Play Mode check passed actual pointer entry/exit, neutral initial/keyboard selection, focus-loss clearing and clicking NEW COLONY to show the revised message. Both saved menu and planet assets pass idle-bracket checks. Captures `Menu-No-Idle-Highlight.png` and `Getting-You-An-Exoplanet.png` were inspected. The shared button component also serves the landing screen.
+
+The camera now reserves one ground footprint for all allowed tilts and headings. Pan bounds depend on zoom and aspect ratio, so tilting or turning cannot relocate an already valid focus. A focused, fast projection check passes **2,016 boundary poses** across three aspect ratios and zoom distances, the full 42–78° tilt range and all eight headings. Actual camera corner rays remain inside the survey; ground focus and zoom stay fixed. Initial framing also retains a landing area near an edge. The supported widest 16:9 distance is **386.46 m**, with some pan travel reserved at that zoom. This is intentionally more conservative than the prior approximately 500 m limit that could move the focus on a tilt.
+
+The Windows x64 build succeeds with **zero errors and warnings**, **102,860,961 bytes**, in **26.72 s**. Evidence: `Logs/SurveyCameraBounds.txt`, `Logs/NavigationRevisionPreview.txt`, `Logs/PlanetBuild.txt` and saved-asset logs. No terrain-generation or repeated-transition suite was rerun. Temporary input/capture tools are excluded from the player and removed before delivery.
+
 ## Flatter terrain, finer ground detail and Shift-wheel zoom — 2026-09-16
 
 Surface generator `meridian-surface-4` lowers the broad elevation scale from 1,200 to 450 m, added broad relief from 100 to 12 m, small hills from 18 to 2.5 m, and plateau rise from 35 to 3 m. The flat core expands from 190 to 260 m radius with a 300 m shoulder transition. Terrain and drainage share the reduced elevation scale. Tree density and placement limits are preserved.

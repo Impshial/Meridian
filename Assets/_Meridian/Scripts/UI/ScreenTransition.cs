@@ -10,6 +10,7 @@ namespace Meridian
 {
     public sealed class ScreenTransition : MonoBehaviour
     {
+        public const string PlanetLoadingMessage="Getting you an exo-planet...";
         [SerializeField] private CanvasGroup overlay;
         [SerializeField] private TMP_FontAsset font;
         [SerializeField,Range(.1f,1f)] private float duration=.5f;
@@ -31,14 +32,14 @@ namespace Meridian
         {
             if(Active)return;
             var runner=Instantiate(prefab);
-            runner.SetMessage(loadingMessage??(destination=="PlanetSelection"?"Loading Exo-planet...":string.Empty));
+            runner.SetMessage(loadingMessage??(destination=="PlanetSelection"?PlanetLoadingMessage:string.Empty));
             runner.StartCoroutine(runner.ChangeScene(destination));
         }
         public static void Reveal(ScreenTransition prefab,string loadingMessage=null)
         {
             if(Active)return;
             var runner=Instantiate(prefab);runner.overlay.alpha=1;
-            runner.SetMessage(loadingMessage??"Loading Exo-planet...");runner.StartCoroutine(runner.FinishEntry());
+            runner.SetMessage(loadingMessage??PlanetLoadingMessage);runner.StartCoroutine(runner.FinishEntry());
         }
         static ISetupDestination Destination()=>FindObjectsByType<MonoBehaviour>().OfType<ISetupDestination>().FirstOrDefault();
         IEnumerator ChangeScene(string destination)

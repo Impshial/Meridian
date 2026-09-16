@@ -4,7 +4,7 @@ Milestone 3 ends with a confirmed position and heading. It does not start the dr
 
 ## Flow and controls
 
-NEW COLONY immediately shows `Loading Exo-planet...`. An accepted globe click gives a brief screen-space pulse and rotates the captured geographic point toward the fixed camera. Land clicks select a region; water clicks can center the view without replacing that selection. Manual dragging interrupts centering. The selected flag has a separate fixed geographic anchor and camera-facing visual; its edge indicator represents a hidden or off-screen selection.
+NEW COLONY immediately shows `Getting you an exo-planet...`. An accepted globe click gives a brief screen-space pulse and rotates the captured geographic point toward the fixed camera. Land clicks select a region; water clicks can center the view without replacing that selection. Manual dragging interrupts centering. The selected flag has a separate fixed geographic anchor and camera-facing visual; its edge indicator represents a hidden or off-screen selection.
 
 CONTINUE becomes available after selecting land. It immediately shows `Loading Landing Site...`, then waits for numerical generation, terrain, colliders, materials, camera, and controls. A failed survey offers BACK TO PLANET on the same planet. Loading text and its unscaled animation have their own presentation above the fading black overlay. Held input is released before destination interaction is enabled.
 
@@ -23,7 +23,7 @@ CONTINUE becomes available after selecting land. It immediately shows `Loading L
 | LAND HERE | Revalidate and confirm the locked candidate |
 | BACK TO PLANET | Restore the planet, selection, rotation, and zoom |
 
-The surface camera has nominal 95–1,250 m zoom, a requested initial distance of 730 m, and 42–78° pitch. One aspect-dependent distance limit reserves a ground-facing frustum that fits the generated survey at every allowed heading and pitch. On the default 2 km survey at 16:9, this tightens the maximum and initial distance to approximately **500 m**. The same limit applies throughout camera turns and tilts, so the wheel does not also change zoom. Panning stays inside the survey, and the lens maintains at least 24 m terrain clearance. Confirmation freezes placement editing, leaves the marker visible, and keeps the camera and BACK TO PLANET available. Choosing another planet region clears the previous surface, candidate, and confirmation.
+The surface camera has nominal 95–1,250 m zoom, a requested initial distance of 730 m, and 42–78° pitch. Its pan boundary reserves a circular ground footprint enclosing every allowed tilt and heading. At a given zoom and aspect ratio, the same X/Z limits apply to overhead and angled views: tilting or pressing Q/E at an edge cannot shift the ground focus. The default 2 km survey at 16:9 supports up to **386.46 m** distance, reserving some pan travel even at the widest view. Initial framing can move closer to retain a landing area near an edge. Zooming in increases pan travel; zooming out smoothly brings the focus inside the wider footprint. The lens maintains at least 24 m terrain clearance. Confirmation freezes placement editing, leaves the marker visible, and keeps the camera and BACK TO PLANET available. Choosing another planet region clears the previous surface, candidate, and confirmation.
 
 ## Geography and coordinates
 

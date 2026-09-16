@@ -33,6 +33,7 @@ namespace Meridian.Editor
             }
             var buttons=components.OfType<Button>().ToArray();
             Require(buttons.Length==2,"Expected only BACK and CONTINUE.");
+            Require(buttons.All(b=>b.GetComponentInChildren<CanvasGroup>().alpha==0),"Saved planet controls contain a hover bracket before pointer entry.");
             var back=buttons.Single(b=>b.GetComponentInChildren<TMP_Text>().text=="BACK");
             var next=buttons.Single(b=>b.GetComponentInChildren<TMP_Text>().text=="CONTINUE");
             Require(back.onClick.GetPersistentEventCount()==1 && back.onClick.GetPersistentMethodName(0)=="Back","Missing BACK action.");

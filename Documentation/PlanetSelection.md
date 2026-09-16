@@ -4,7 +4,9 @@ The planet targets naturalistic orbital geography and balanced habitable planets
 
 ## Controls and transitions
 
-NEW COLONY immediately displays `Loading Exo-planet...`, blocks repeated activation and fades the complete menu to black over 0.5 seconds. The loading text is independent of cover alpha and survives scene changes. A fresh setup session generates a new seed on a cancellable worker, then creates Unity resources on the main thread. Destination readiness, fade completion and initiating-input release gate interaction. Opening PlanetSelection directly creates a session if needed.
+NEW COLONY immediately displays `Getting you an exo-planet...`, blocks repeated activation and fades the complete menu to black over 0.5 seconds. The loading text is independent of cover alpha and survives scene changes. A fresh setup session generates a new seed on a cancellable worker, then creates Unity resources on the main thread. Destination readiness, fade completion and initiating-input release gate interaction. Opening PlanetSelection directly creates a session if needed.
+
+Main-menu and planet buttons show amber text and brackets only during pointer hover. Pointer exit, focus loss and disabling the component clear transient feedback; disabled controls show no hover feedback. Keyboard selection remains available for activation without creating a persistent hover appearance.
 
 Left-drag rotates the planet around camera-relative axes; no camera transform changes, idle rotation, pan, inertia, or keyboard viewing controls are used. A 7-pixel threshold at 1080p scales with viewport height and tracks maximum excursion. UI owns an entire gesture begun on a button. Focus loss clears captured input. Scroll uses Input System 1.20's normalized ticks, with a 120-unit divisor only if native Windows scroll mode is explicitly selected.
 
