@@ -34,7 +34,9 @@ namespace Meridian
     /// <summary>Visit-owned geography. GPU maps are uploads of these exact CPU fields; no separate picking generator.</summary>
     public sealed class PlanetData
     {
-        public const string GeneratorVersion="meridian-planet-1";
+        // Version 2 changes surface baking/sampling; seeded graph geography and drainage are unchanged.
+        public const string GeneratorVersion="meridian-planet-2";
+        public const float BoundaryBand=.015f;
         public readonly int Seed;
         public string Version => GeneratorVersion;
         public readonly PlanetParameters Parameters;
@@ -43,8 +45,9 @@ namespace Meridian
         public readonly int[] Downstream;
         public readonly PlanetWater[] Water;
         public readonly PlanetBiome[] Biomes;
-        public readonly Color32[] ColorMap, NormalMap, SurfaceMap;
-        public readonly float[] MapElevation, MapMoisture;
+        public Color32[] ColorMap { get; private set; }
+        public Color32[] NormalMap { get; private set; }
+        public readonly Color32[] SurfaceMap;
         public float LandFraction;
         public double GenerationSeconds;
         public int Width => Parameters.mapWidth;
@@ -59,8 +62,10 @@ namespace Meridian
             Water=new PlanetWater[count]; Biomes=new PlanetBiome[count];
             int pixels=Width*Height;
             ColorMap=new Color32[pixels]; NormalMap=new Color32[pixels]; SurfaceMap=new Color32[pixels];
-            MapElevation=new float[pixels]; MapMoisture=new float[pixels];
         }
+
+        // Appearance buffers are staging memory. Classification and graph fields remain authoritative.
+        public void ReleaseAppearanceBuffers(){ColorMap=null;NormalMap=null;}
 
         public static Vector2 Coordinates(Vector3 direction)
         {
@@ -87,16 +92,12 @@ namespace Meridian
             int a=Index(ix,iy),b=Index(ix+1,iy),c=Index(ix,iy+1),d=Index(ix+1,iy+1);
             float Blend(float aa,float bb,float cc,float dd)=>Mathf.Lerp(Mathf.Lerp(aa,bb,fx),Mathf.Lerp(cc,dd,fx),fy);
             float water=Blend(SurfaceMap[a].r,SurfaceMap[b].r,SurfaceMap[c].r,SurfaceMap[d].r)/255f;
-            int nearest=Index(Mathf.RoundToInt(x),Mathf.RoundToInt(y));
+            // Match the shader's discrete texel load, including exact half-texel ties.
+            int nearest=Index(Mathf.FloorToInt(x+.5f),Mathf.FloorToInt(y+.5f));
             var type=water>=.5f ? (PlanetWater)Mathf.Clamp(SurfaceMap[nearest].g,1,3) : PlanetWater.None;
-            // Near a boundary the nearest texel may be land; take the dominant wet neighbour's type.
-            if(type!=PlanetWater.None && SurfaceMap[nearest].r==0)
-            {
-                int wet=SurfaceMap[a].r>0?a:SurfaceMap[b].r>0?b:SurfaceMap[c].r>0?c:d;
-                type=(PlanetWater)Mathf.Clamp(SurfaceMap[wet].g,1,3);
-            }
-            return new PlanetSample(Blend(MapElevation[a],MapElevation[b],MapElevation[c],MapElevation[d]),
-                Blend(MapMoisture[a],MapMoisture[b],MapMoisture[c],MapMoisture[d]),(PlanetBiome)SurfaceMap[nearest].b,type);
+            Graph.Locate(localUnitDirection.normalized,out int ga,out int gb,out int gc,out Vector3 weights);
+            float Geographic(float[] values)=>values[ga]*weights.x+values[gb]*weights.y+values[gc]*weights.z;
+            return new PlanetSample(Geographic(Elevation),Geographic(Moisture),(PlanetBiome)SurfaceMap[nearest].b,type);
         }
     }
 }

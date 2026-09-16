@@ -23,19 +23,24 @@ namespace Meridian
             generatedMesh=new Mesh {name="Generated Meridian Globe",vertices=vertices,triangles=geometry.Triangles};
             generatedMesh.RecalculateNormals();generatedMesh.RecalculateBounds();
             GetComponent<MeshFilter>().sharedMesh=generatedMesh;Collider.sharedMesh=generatedMesh;
-            colorMap=Map("Planet Color",data,data.ColorMap,false);
-            normalMap=Map("Planet Object Normals",data,data.NormalMap,true);
-            surfaceMap=Map("Planet Surface Classification",data,data.SurfaceMap,true);
+            colorMap=Map("Planet Color",data,data.ColorMap,false,true);
+            normalMap=Map("Planet Object Normals",data,data.NormalMap,true,true);
+            surfaceMap=Map("Planet Surface Classification",data,data.SurfaceMap,true,false);
             generatedMaterial=new Material(surfaceMaterial){name="Generated Meridian Surface"};
             generatedMaterial.SetTexture("_ColorMap",colorMap);generatedMaterial.SetTexture("_NormalMap",normalMap);
             generatedMaterial.SetTexture("_SurfaceMap",surfaceMap);
+            uint seed=unchecked((uint)data.Seed);
+            generatedMaterial.SetVector("_TerrainOffset",new Vector4(seed%997,(seed>>10)%991,(seed>>20)%983,0));
             GetComponent<MeshRenderer>().sharedMaterial=generatedMaterial;
+            data.ReleaseAppearanceBuffers();
         }
-        static Texture2D Map(string name,PlanetData data,Color32[] pixels,bool linear)
+        static Texture2D Map(string name,PlanetData data,Color32[] pixels,bool linear,bool mipmaps)
         {
-            var texture=new Texture2D(data.Width,data.Height,TextureFormat.RGBA32,false,linear)
-            {name=name,wrapModeU=TextureWrapMode.Repeat,wrapModeV=TextureWrapMode.Clamp,filterMode=FilterMode.Bilinear};
-            texture.SetPixels32(pixels);texture.Apply(false,true);return texture;
+            // Every base texel is overwritten and all appearance mips are generated before use.
+            var texture=new Texture2D(data.Width,data.Height,TextureFormat.RGBA32,mipmaps,linear,true)
+            {name=name,wrapModeU=TextureWrapMode.Repeat,wrapModeV=TextureWrapMode.Clamp,
+                filterMode=mipmaps?FilterMode.Trilinear:FilterMode.Bilinear,anisoLevel=mipmaps?4:1};
+            texture.SetPixels32(pixels);texture.Apply(mipmaps,true);return texture;
         }
         public bool Pick(Ray ray,out RaycastHit hit)
         { hit=default;return Collider.sharedMesh && Collider.Raycast(ray,out hit,100f); }

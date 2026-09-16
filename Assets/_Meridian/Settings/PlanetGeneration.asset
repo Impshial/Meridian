@@ -16,7 +16,7 @@ MonoBehaviour:
   developmentSeed: 73129
   geographySubdivisions: 6
   meshSubdivisions: 4
-  mapWidth: 1024
+  mapWidth: 4096
   minimumLand: 0.25
   maximumLand: 0.45
   relief: 0.005

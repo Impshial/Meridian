@@ -49,8 +49,10 @@ namespace Meridian.Editor
             var material=AssetDatabase.LoadAssetAtPath<Material>("Assets/_Meridian/Art/Materials/PlanetSurface.mat");
             foreach(string property in new[]{"_RippleStrength","_WaterDetailScale","_WaterSpeed","_WaterRoughness","_GlintStrength","_DepthContribution"})
                 Require(material.HasProperty(property),"Missing water tuning property: "+property);
+            var generation=AssetDatabase.LoadAssetAtPath<PlanetGenerationSettings>("Assets/_Meridian/Settings/PlanetGeneration.asset");
+            Require(generation.mapWidth==4096 && generation.Snapshot().mapWidth==4096,"Saved terrain maps must actually generate at 4096x2048.");
             EditorSceneManager.OpenScene(MeridianSetup.ScenePath);
-            File.WriteAllText("Logs/PlanetSavedAssets.txt","PASS: two saved scenes, controls, references, shader, camera, EventSystem; 45/63/210% zoom, proportional wheel rate, local button contrast, six water controls.\n");
+            File.WriteAllText("Logs/PlanetSavedAssets.txt","PASS: two saved scenes, controls, references, shader, camera, EventSystem; 45/63/210% zoom, proportional wheel rate, local button contrast, six water controls; saved 4096x2048 terrain maps.\n");
         }
 
         [MenuItem("Meridian/Validate Regional Zoom Projection")]
@@ -147,9 +149,14 @@ namespace Meridian.Editor
         {
             using(var sha=SHA256.Create())
             {
-                var bytes=new byte[data.SurfaceMap.Length*4+data.ColorMap.Length*4];int i=0;
-                foreach(var map in new[]{data.SurfaceMap,data.ColorMap})foreach(var p in map){bytes[i++]=p.r;bytes[i++]=p.g;bytes[i++]=p.b;bytes[i++]=p.a;}
-                return BitConverter.ToString(sha.ComputeHash(bytes)).Replace("-","");
+                var bytes=new byte[65536];int i=0;
+                foreach(var map in new[]{data.SurfaceMap,data.ColorMap,data.NormalMap})foreach(var p in map)
+                {
+                    bytes[i++]=p.r;bytes[i++]=p.g;bytes[i++]=p.b;bytes[i++]=p.a;
+                    if(i==bytes.Length){sha.TransformBlock(bytes,0,i,null,0);i=0;}
+                }
+                sha.TransformFinalBlock(bytes,0,i);
+                return BitConverter.ToString(sha.Hash).Replace("-","");
             }
         }
         public static void BuildSmoke()

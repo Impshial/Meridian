@@ -20,7 +20,7 @@ Scenes, prefabs, settings, and metadata are serialized by Unity and work without
 
 The saved planet scene is `Assets/_Meridian/Scenes/PlanetSelection.unity`. It works directly in Play Mode as well as through the menu. Tune generation in `Assets/_Meridian/Settings/PlanetGeneration.asset`; a development seed override reproduces geography without adding player-facing controls. The fixed camera, gesture threshold, framing limits, fades, and flag animation have Inspector settings on the scene components/prefabs. `Meridian > Author Planet Selection` explicitly rebuilds this milestone's scene and prefabs; do not rerun it over hand-edited layouts.
 
-The globe uses 40,962 geographic samples, a 5,120-triangle render mesh, and three 1024 × 512 generated maps. All geography is generated once per visit and shared with picking. No local colony terrain, save/load, construction, or next-stage action is implemented. See [planet generation and coordinate notes](Documentation/PlanetSelection.md) and [validation](Documentation/Validation.md).
+The globe uses 40,962 geographic samples, a 5,120-triangle render mesh, and three freshly generated 4096 × 2048 maps. Color and normal maps have mip chains; a separate base-level boundary/classification map keeps picking consistent with antialiased shorelines. Seeded procedural surface detail remains attached during rotation. Geography is generated once per visit. No local colony terrain, save/load, construction, or next-stage action is implemented. See [planet generation and coordinate notes](Documentation/PlanetSelection.md) and [validation](Documentation/Validation.md).
 
 ## Repository
 

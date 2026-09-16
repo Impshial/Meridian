@@ -10,7 +10,7 @@ namespace Meridian
         public int developmentSeed = 73129;
         [Range(4, 6)] public int geographySubdivisions = 6;
         [Range(3, 5)] public int meshSubdivisions = 4;
-        [Range(256, 2048)] public int mapWidth = 1024;
+        [Range(1024, 8192)] public int mapWidth = 4096;
         [Range(0.25f, 0.45f)] public float minimumLand = 0.25f;
         [Range(0.25f, 0.45f)] public float maximumLand = 0.45f;
         [Range(0.001f, 0.01f)] public float relief = 0.005f;
@@ -21,7 +21,7 @@ namespace Meridian
         {
             geographySubdivisions = Mathf.Clamp(geographySubdivisions, 4, 6),
             meshSubdivisions = Mathf.Clamp(meshSubdivisions, 3, 5),
-            mapWidth = Mathf.ClosestPowerOfTwo(Mathf.Clamp(mapWidth, 256, 2048)),
+            mapWidth = Mathf.ClosestPowerOfTwo(Mathf.Clamp(mapWidth, 1024, 8192)),
             minimumLand = Mathf.Clamp(minimumLand, .25f, .45f),
             maximumLand = Mathf.Clamp(Mathf.Max(minimumLand, maximumLand), .25f, .45f),
             relief = Mathf.Clamp(relief, .001f, .01f),

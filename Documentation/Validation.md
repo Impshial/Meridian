@@ -1,5 +1,52 @@
 # Validation
 
+## Terrain resolution correction — 2026-09-16
+
+The baseline used 1024 × 512 runtime maps without mipmaps and forced LOD 0. The initial editor preview was only 1101 × 627; baseline and final captures instead use actual 1920 × 1080 and 2560 × 1440 render targets, URP render scale 1 and texture mip limit 0. Comparisons use seed 73129, saved local orientations, unchanged lighting and the full 210% zoom. Coarse graph interpolation, binary coast thresholds and resolution-dependent normal differences were additional bottlenecks. Increasing mesh density was unnecessary.
+
+The delivered default is three freshly baked **4096 × 2048** maps. Color and object normals have 13 mip levels, trilinear filtering and anisotropy 4, using seam-aware shader gradients. The linear packed surface map stays at one level; continuous coverage is bilinear while IDs are fetched explicitly. Bounded cubic coastal interpolation, analytic normal gradients and seed-anchored procedural shading improve close detail. The freezing interval uses all 256 alpha levels to remove polar-water banding. The existing water material controls, 45/63/210% zoom, camera pose, geometry, menu and flag behavior remain intact. 8K is configurable but was not needed or benchmarked.
+
+| Check | Evidence / result |
+| --- | --- |
+| Fixed geography | Seed 73129's original and corrected elevation, moisture, temperature, filled drainage, flow, downstream links, water nodes and biome nodes have identical SHA-256 `FE57A8951914CDA94A6F4AAFD1FB821BAA61799AA2CD58E7DA73E4EFF216270B`. Physical placement heights come directly from these graph fields. |
+| Determinism and generation | Five fixed seeds plus an exact repeat pass feature coverage, descending drainage, wrapped longitude, uniform pole rows and cancellation. Repeat hashes include all three maps. |
+| Surface checks | 4K defaults, 8K settings clamp, shared cubic edge continuity, bounded controls, unchanged graph fields across map resolutions, preserved angular river width, normalized normals, continuous boundaries, freezing precision and staging release pass. |
+| Native appearance | Forest, desert, rock, snow, coast, pole and seam captures at 1080p and 1440p; another seed (42817) also captured and exercised. Native crops show finer surface detail and smoother shores. Full rotation and zoom-out recorded as 160 actual rendered frames. |
+| Picking | Hardware probe compares 36,315 output pixels against actual collider hits and CPU sampling: zero interior discrepancies. One half-covered contour sample differs by 0.0501 output pixel due to raster/sampling precision, within the one-pixel antialiasing transition. Actual pointer clicks accept the dry shoreline and reject the wet shoreline. |
+| Interaction | Land selection, ocean/lake/river rejection, pole/seam flags, drag ownership, wheel over UI, extreme zoom and stable camera/data/flag anchors pass. CONTINUE remains disabled. |
+| Lifetime | Three editor and three Windows reentry cycles keep five generated mesh/material/texture objects while visiting and zero in MainMenu. Appearance staging arrays are null after upload; a weak-reference check confirms the previous PlanetData is collectible after BACK. No runtime errors. |
+
+Measured cost on this machine (Editor timings include editor overhead; standalone frames are VSync limited):
+
+| Measurement | Baseline / final |
+| --- | --- |
+| Numeric generation, seed 73129 | 5.02 seconds baseline Editor; 12.22 seconds final Editor (earlier corrected run 13.96 seconds). Final Windows entry measured 12.50 seconds. The black transition remains visible during generation. |
+| 1920 × 1080, 200 steady frames | Baseline Editor mean 12.17 ms / p95 14.52 ms; final mean 7.41 ms / p95 9.55 ms. These are separate runs, not evidence of a guaranteed speedup. |
+| 2560 × 1440, 200 steady frames | Final Editor mean 10.79 ms / p95 14.02 ms. |
+| Windows 1920 × 1080 | Final mean 16.76 ms / p95 16.66 ms at 60 Hz VSync; not an isolated GPU timing. |
+| GPU texture pixel payload | 6 MiB baseline → **117.33 MiB** final, including appearance mip chains. Unity Editor native texture allocation accounting reports 234.71 MiB. |
+| CPU map arrays | 96 MiB during bake; 64 MiB of appearance buffers released after upload, 32 MiB classification retained plus fixed graph data. No full-resolution elevation/moisture or normal-height scratch arrays. |
+| Windows process memory | Profiling run: menu working set 398.12 MiB; active 671.52 MiB; peak 704.15 MiB, approximately 306.03 MiB above menu. Final smoke run after ice interpolation refinement: process peak 711.75 MiB; peak managed heap 123.66 MiB. Whole-process figures include Unity and capture/test infrastructure. |
+| Windows GPU process allocation | Five stable OS-counter samples: 304.27 MiB dedicated and 191.46 MiB shared. These include render targets, menu resources and driver allocations, not just planet maps. Nondevelopment-player Unity texture-profiler readings were unavailable. |
+
+Static maps are generated once per visit with at most eight numeric workers, then uploaded on the main thread. Rotation and zoom reuse them. The GPU texture payload and retained CPU classification are substantially larger than before; a later platform budget may warrant compression or a different representation. This correction adds orbital shading detail, not local terrain or physical vegetation.
+
+Final Windows x64 build: succeeded with zero errors and warnings, 102,595,497 bytes, 17.67 seconds. The visible final player passed entry, native 1080p rendering, input/selection and BACK cleanup with no runtime errors. The ignored smoke build includes its file-based runner only when launched with `-meridian-terrain-test`; that instrumentation is removed from Assets for delivery.
+
+After removing temporary test assets, Unity was closed and reopened from disk. MainMenu and PlanetSelection saved-asset validators passed again, the seed override remained disabled and the default map width remained 4096. `Logs/Terrain-Final-Reopen.log` records this clean reopen.
+
+Changed files: `PlanetGenerationSettings.cs` and `PlanetGeneration.asset` set the actual default/clamp; `PlanetGenerator.cs` refines baking and preserves river widths; `PlanetData.cs` retains authoritative classification and graph sampling while releasing staging buffers; `PlanetGlobe.cs` creates filtered mipmapped appearance resources; `PlanetSurface.shader` adds filtered detail and pixel-scale coverage; `PlanetValidation.cs` and new `PlanetSurfaceValidation.cs` cover the changed contracts. README and planet documentation describe the new budgets and representation. Packages, Unity version and menu artwork are unchanged.
+
+Local evidence is ignored by Git:
+
+- `Captures/Terrain-Before-After-Native.png` — full native 1080p views side by side at 210% zoom; `Terrain-Before-After-Detail.png` — unscaled 1440p crops.
+- `Captures/Terrain-Before-<feature>-<resolution>.png`, `Terrain-After-<feature>-<resolution>.png` and `Terrain-Seed42817-<feature>-1920x1080.png` — native biome, coast, pole and seam captures.
+- `Captures/Meridian-Terrain-Rotation.mp4` — actual rotation/zoom sequence.
+- `Captures/Terrain-4K-Metrics.json`, `Terrain-4K-1440-Metrics.json`, `Terrain-Windows-Final-Entry.json`, `Terrain-Windows-Final-Profile.json`, `Terrain-Windows-Final-Process.json`, `Terrain-Windows-GPU.json` — dimensions, mip counts and measured costs.
+- `Captures/Terrain-4K-Suite.json`, `Terrain-Seed42817.json`, `Terrain-Editor-Cycles.json`, `Terrain-Windows-Suite.json`, `Terrain-Windows-Cycles.json`, `Terrain-Edges-And-Collection.json` — interaction, boundary and lifetime results.
+- `Captures/Terrain-Windows-Final-Suite.json`, `Terrain-Windows-Final-Cleanup.json` — final standalone regression and managed-data collection checks.
+- `Logs/PlanetSurfaceValidation.txt`, `PlanetGenerationValidation.txt`, `PlanetSavedAssets.txt`, `PlanetZoomValidation.txt` and `PlanetBuild.txt` — durable checks and build evidence.
+
 ## Water and regional zoom correction — 2026-09-15
 
 This correction supersedes the original whole-globe fit requirement and its historical framing captures below. Generator code, shared geographic sampling, packages, menu artwork, lighting, flag geometry and coordinates are unchanged.
