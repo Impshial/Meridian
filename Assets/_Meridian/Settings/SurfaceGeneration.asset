@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2a37ca0c246f0e345a13e42a0ef77225, type: 3}
+  m_Name: SurfaceGeneration
+  m_EditorClassIdentifier: Assembly-CSharp::Meridian.SurfaceGenerationSettings
+  mappingRadius: 30000
+  elevationScale: 1200
+  tileSize: 1000
+  heightmapResolution: 513
+  alphamapResolution: 128
+  minimumTerrainHeight: -400
+  terrainHeightRange: 2400
+  minimumRiverWidth: 9
+  maximumRiverWidth: 24
+  minimumBuildableArea: 90000
+  minimumInteriorSize: 200
+  buildableSlope: 5
+  buildableCellSize: 10
+  plainRadius: 260
+  plainBlend: 220
+  objectCellSize: 18
+  shipWidth: 14
+  shipLength: 26
+  accessLength: 18
+  safetyMargin: 5
+  maximumLandingSlope: 7
+  maximumLandingVariation: 1.8
+  placementSampleSpacing: 2

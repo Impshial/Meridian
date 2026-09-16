@@ -45,8 +45,9 @@ namespace Meridian.Editor
             }
             foreach (var label in buttons.Select(button => button.GetComponentInChildren<TMP_Text>()))
                 Require(label.text.All(character => character == ' ' || label.font.HasCharacter(character)), "Missing label glyph.");
-            Require(EditorBuildSettings.scenes.Length == 2 && EditorBuildSettings.scenes.All(s => s.enabled) &&
-                EditorBuildSettings.scenes[0].path == scene.path && EditorBuildSettings.scenes[1].path == PlanetSelectionAuthoring.ScenePath, "Two-scene startup configuration changed.");
+            Require(EditorBuildSettings.scenes.Length == 3 && EditorBuildSettings.scenes.All(s => s.enabled) &&
+                EditorBuildSettings.scenes[0].path == scene.path && EditorBuildSettings.scenes[1].path == PlanetSelectionAuthoring.ScenePath &&
+                EditorBuildSettings.scenes[2].path == LandingSiteAuthoring.ScenePath, "Three-scene startup configuration changed.");
             Directory.CreateDirectory("Logs");
             File.WriteAllText("Logs/MainMenuValidation.txt", "PASS\nUnity " + Application.unityVersion +
                 "\nScene " + scene.path + "\nBackend " + PlayerSettings.GetScriptingBackend(NamedBuildTarget.Standalone) +

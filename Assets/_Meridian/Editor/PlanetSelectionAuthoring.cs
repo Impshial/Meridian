@@ -77,6 +77,7 @@ namespace Meridian.Editor
             viewing.Configure(camera,globe,selection);
             selection.Configure(settings,globe,flag,viewing,transition,group,back,next);
             UnityEventTools.AddPersistentListener(back.onClick,selection.Back);
+            UnityEventTools.AddPersistentListener(next.onClick,selection.Continue);
             EditorSceneManager.SaveScene(scene,ScenePath);
 
             string menuPath=Root+"/Prefabs/UI/MainMenu.prefab";
@@ -90,7 +91,9 @@ namespace Meridian.Editor
                 PrefabUtility.SaveAsPrefabAsset(menu,menuPath);
             }
             finally{PrefabUtility.UnloadPrefabContents(menu);}
-            EditorBuildSettings.scenes=new[]{new EditorBuildSettingsScene(MeridianSetup.ScenePath,true),new EditorBuildSettingsScene(ScenePath,true)};
+            var buildScenes=new System.Collections.Generic.List<EditorBuildSettingsScene>{new EditorBuildSettingsScene(MeridianSetup.ScenePath,true),new EditorBuildSettingsScene(ScenePath,true)};
+            if(File.Exists(LandingSiteAuthoring.ScenePath))buildScenes.Add(new EditorBuildSettingsScene(LandingSiteAuthoring.ScenePath,true));
+            EditorBuildSettings.scenes=buildScenes.ToArray();
             AssetDatabase.SaveAssets();EditorSceneManager.OpenScene(MeridianSetup.ScenePath);
             Debug.Log("Meridian planet selection assets authored and saved.");
         }
@@ -110,9 +113,10 @@ namespace Meridian.Editor
         {
             var root=Rect("Screen Transition",null);var canvas=root.gameObject.AddComponent<Canvas>();
             canvas.renderMode=RenderMode.ScreenSpaceOverlay;canvas.sortingOrder=30000;
-            root.gameObject.AddComponent<GraphicRaycaster>();var group=root.gameObject.AddComponent<CanvasGroup>();group.alpha=0;
+            root.gameObject.AddComponent<GraphicRaycaster>();
             var black=Rect("Black Cover",root);Stretch(black);black.gameObject.AddComponent<Image>().color=Color.black;
-            root.gameObject.AddComponent<ScreenTransition>().Configure(group);
+            var group=black.gameObject.AddComponent<CanvasGroup>();group.alpha=0;
+            root.gameObject.AddComponent<ScreenTransition>().Configure(group,AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(Root+"/Art/Fonts/MeridianMenu_SDF.asset"));
             var prefab=PrefabUtility.SaveAsPrefabAsset(root.gameObject,Root+"/Prefabs/UI/ScreenTransition.prefab");
             UnityEngine.Object.DestroyImmediate(root.gameObject);return prefab.GetComponent<ScreenTransition>();
         }

@@ -1,0 +1,52 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &2986797262937524414
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 7942906172539439806}
+  - component: {fileID: 1358252881470117073}
+  m_Layer: 0
+  m_Name: LandingSiteScreen
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &7942906172539439806
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2986797262937524414}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1358252881470117073
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2986797262937524414}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 04b159f13c934f8988890a8c709b7444, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Meridian.SurfaceSelectionController
+  settings: {fileID: 11400000, guid: 02db508c06101c6459532f759658b342, type: 2}
+  transitionPrefab: {fileID: 3135794519436759594, guid: 8f4349f973c60c1469d618959ec1da5c, type: 3}
+  previewPrefab: {fileID: 5096778833659417235, guid: 2b8ba4c5131b9f24d8aa8253739b4a59, type: 3}
+  terrainMaterial: {fileID: 2100000, guid: d3e7b4a9085d25d4da2ff8e633e180f9, type: 2}
+  waterMaterial: {fileID: 2100000, guid: 0c7c1735e5da3ce4fa8409ced2b7612b, type: 2}
+  menuButtonPrefab: {fileID: 6307401896567525032, guid: 881a0008169fe334ead561a995327692, type: 3}

@@ -14,7 +14,9 @@ namespace Meridian
         public void ConfigureTransition(ScreenTransition transition) => transitionPrefab = transition;
         public void OpenPlanetSelection()
         {
-            if (!ScreenTransition.Active) ScreenTransition.Travel(transitionPrefab, "PlanetSelection");
+            if(ScreenTransition.Active)return;
+            SetupSession.BeginNew();
+            ScreenTransition.Travel(transitionPrefab,"PlanetSelection","Loading Exo-planet...");
         }
 
         private void Start()

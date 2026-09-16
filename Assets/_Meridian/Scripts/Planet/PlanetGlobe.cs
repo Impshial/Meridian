@@ -6,32 +6,62 @@ namespace Meridian
     public sealed class PlanetGlobe : MonoBehaviour
     {
         [SerializeField] private Material surfaceMaterial;
-        private Mesh generatedMesh;
-        private Material generatedMaterial;
-        private Texture2D colorMap,normalMap,surfaceMap;
+        private PlanetRenderResources resources;
+        private bool ownsResources;
         public PlanetData Data { get; private set; }
         public MeshCollider Collider => GetComponent<MeshCollider>();
-        public int TriangleCount => generatedMesh ? generatedMesh.triangles.Length/3 : 0;
+        public int TriangleCount => resources?.TriangleCount??0;
         public void Configure(Material material) => surfaceMaterial=material;
 
         public void Apply(PlanetData data)
         {
-            Release(); Data=data;
+            Release();
+            var created=new PlanetRenderResources();
+            try{created.Create(data,surfaceMaterial);Attach(data,created);ownsResources=true;}
+            catch{created.Dispose();throw;}
+        }
+        public void Attach(PlanetData data,PlanetRenderResources cached)
+        {
+            Release();Data=data;resources=cached;ownsResources=false;
+            GetComponent<MeshFilter>().sharedMesh=cached.Mesh;Collider.sharedMesh=cached.Mesh;
+            GetComponent<MeshRenderer>().sharedMaterial=cached.Material;
+        }
+        public PlanetRenderResources TransferOwnership(){ownsResources=false;return resources;}
+        public bool Pick(Ray ray,out RaycastHit hit)
+        { hit=default;return Collider.sharedMesh && Collider.Raycast(ray,out hit,100f); }
+        public void Release()
+        {
+            Collider.sharedMesh=null;GetComponent<MeshFilter>().sharedMesh=null;
+            GetComponent<MeshRenderer>().sharedMaterial=null;
+            if(ownsResources)resources?.Dispose();
+            resources=null;ownsResources=false;Data=null;
+        }
+        private void OnDestroy()=>Release();
+    }
+
+    /// <summary>One session-owned GPU cache; views attach without duplicating the 4K maps.</summary>
+    public sealed class PlanetRenderResources : System.IDisposable
+    {
+        public Mesh Mesh {get;private set;}
+        public Material Material {get;private set;}
+        public int TriangleCount {get;private set;}
+        private Texture2D colorMap,normalMap,surfaceMap;
+        public void Create(PlanetData data,Material template)
+        {
             var geometry=new SphericalGraph(data.Parameters.meshSubdivisions);
             var vertices=new Vector3[geometry.Directions.Length];
             for(int i=0;i<vertices.Length;i++)vertices[i]=geometry.Directions[i]*(1+Mathf.Max(0,data.Sample(geometry.Directions[i]).Elevation)*data.Parameters.relief);
-            generatedMesh=new Mesh {name="Generated Meridian Globe",vertices=vertices,triangles=geometry.Triangles};
-            generatedMesh.RecalculateNormals();generatedMesh.RecalculateBounds();
-            GetComponent<MeshFilter>().sharedMesh=generatedMesh;Collider.sharedMesh=generatedMesh;
+            Mesh=new Mesh {name="Generated Meridian Globe",vertices=vertices,triangles=geometry.Triangles};
+            TriangleCount=geometry.Triangles.Length/3;
+            Mesh.RecalculateNormals();Mesh.RecalculateBounds();
             colorMap=Map("Planet Color",data,data.ColorMap,false,true);
             normalMap=Map("Planet Object Normals",data,data.NormalMap,true,true);
             surfaceMap=Map("Planet Surface Classification",data,data.SurfaceMap,true,false);
-            generatedMaterial=new Material(surfaceMaterial){name="Generated Meridian Surface"};
-            generatedMaterial.SetTexture("_ColorMap",colorMap);generatedMaterial.SetTexture("_NormalMap",normalMap);
-            generatedMaterial.SetTexture("_SurfaceMap",surfaceMap);
+            Material=new Material(template){name="Generated Meridian Surface"};
+            Material.SetTexture("_ColorMap",colorMap);Material.SetTexture("_NormalMap",normalMap);
+            Material.SetTexture("_SurfaceMap",surfaceMap);
             uint seed=unchecked((uint)data.Seed);
-            generatedMaterial.SetVector("_TerrainOffset",new Vector4(seed%997,(seed>>10)%991,(seed>>20)%983,0));
-            GetComponent<MeshRenderer>().sharedMaterial=generatedMaterial;
+            Material.SetVector("_TerrainOffset",new Vector4(seed%997,(seed>>10)%991,(seed>>20)%983,0));
             data.ReleaseAppearanceBuffers();
         }
         static Texture2D Map(string name,PlanetData data,Color32[] pixels,bool linear,bool mipmaps)
@@ -40,18 +70,14 @@ namespace Meridian
             var texture=new Texture2D(data.Width,data.Height,TextureFormat.RGBA32,mipmaps,linear,true)
             {name=name,wrapModeU=TextureWrapMode.Repeat,wrapModeV=TextureWrapMode.Clamp,
                 filterMode=mipmaps?FilterMode.Trilinear:FilterMode.Bilinear,anisoLevel=mipmaps?4:1};
-            texture.SetPixels32(pixels);texture.Apply(mipmaps,true);return texture;
+            try{texture.SetPixels32(pixels);texture.Apply(mipmaps,true);return texture;}
+            catch{UnityEngine.Object.Destroy(texture);throw;}
         }
-        public bool Pick(Ray ray,out RaycastHit hit)
-        { hit=default;return Collider.sharedMesh && Collider.Raycast(ray,out hit,100f); }
-        public void Release()
+        public void Dispose()
         {
-            Collider.sharedMesh=null;GetComponent<MeshFilter>().sharedMesh=null;
-            GetComponent<MeshRenderer>().sharedMaterial=null;
-            if(generatedMesh)Destroy(generatedMesh);if(generatedMaterial)Destroy(generatedMaterial);
-            if(colorMap)Destroy(colorMap);if(normalMap)Destroy(normalMap);if(surfaceMap)Destroy(surfaceMap);
-            generatedMesh=null;generatedMaterial=null;colorMap=normalMap=surfaceMap=null;Data=null;
+            if(Mesh)UnityEngine.Object.Destroy(Mesh);if(Material)UnityEngine.Object.Destroy(Material);
+            if(colorMap)UnityEngine.Object.Destroy(colorMap);if(normalMap)UnityEngine.Object.Destroy(normalMap);if(surfaceMap)UnityEngine.Object.Destroy(surfaceMap);
+            Mesh=null;Material=null;colorMap=normalMap=surfaceMap=null;TriangleCount=0;
         }
-        private void OnDestroy()=>Release();
     }
 }

@@ -135,6 +135,26 @@ PrefabInstance:
       propertyPath: m_Navigation.m_Mode
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 1431700417718234250, guid: 881a0008169fe334ead561a995327692, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1431700417718234250, guid: 881a0008169fe334ead561a995327692, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
+      value: 
+      objectReference: {fileID: 1730782860}
+    - target: {fileID: 1431700417718234250, guid: 881a0008169fe334ead561a995327692, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_CallState
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 1431700417718234250, guid: 881a0008169fe334ead561a995327692, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
+      value: Continue
+      objectReference: {fileID: 0}
+    - target: {fileID: 1431700417718234250, guid: 881a0008169fe334ead561a995327692, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
+      value: Meridian.PlanetSelectionController, Assembly-CSharp
+      objectReference: {fileID: 0}
     - target: {fileID: 3359438172886104199, guid: 881a0008169fe334ead561a995327692, type: 3}
       propertyPath: m_Pivot.x
       value: 1
@@ -655,6 +675,7 @@ MonoBehaviour:
   maximumFraming: 2.1
   zoomPerTick: 0.1
   zoomSmoothing: 12
+  centeringDuration: 0.65
 --- !u!114 &1730782860
 MonoBehaviour:
   m_ObjectHideFlags: 0

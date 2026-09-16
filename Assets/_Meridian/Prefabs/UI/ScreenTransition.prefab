@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 1432617462522628585}
   - component: {fileID: 65190486466792832}
   - component: {fileID: 8252384156881335698}
+  - component: {fileID: 1687954329342268972}
   m_Layer: 0
   m_Name: Black Cover
   m_TagString: Untagged
@@ -75,6 +76,18 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!225 &1687954329342268972
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4222766171080755824}
+  m_Enabled: 1
+  m_Alpha: 0
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
 --- !u!1 &6646307192818467833
 GameObject:
   m_ObjectHideFlags: 0
@@ -164,7 +177,7 @@ CanvasGroup:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6646307192818467833}
   m_Enabled: 1
-  m_Alpha: 0
+  m_Alpha: 1
   m_Interactable: 1
   m_BlocksRaycasts: 1
   m_IgnoreParentGroups: 0
@@ -180,5 +193,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a6af77e540570bb40b1def77085287d5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Meridian.ScreenTransition
-  overlay: {fileID: 1269761253907482862}
+  overlay: {fileID: 1687954329342268972}
+  font: {fileID: 11400000, guid: 2bdd631728cb8f846b4ad1f2ee2ccb5a, type: 2}
   duration: 0.5

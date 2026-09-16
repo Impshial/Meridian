@@ -1,5 +1,30 @@
 # Validation
 
+## Milestone 3 — landing-site selection, 2026-09-16
+
+Validation was deliberately kept focused at the user's request. This section supersedes earlier statements that planet CONTINUE is inert or that leaving the globe always destroys its data. Unity, packages, menu artwork, planet generation and 4K appearance defaults are preserved.
+
+| Check | Evidence / result |
+| --- | --- |
+| Saved assets and compilation | MainMenu, PlanetSelection and LandingSiteSelection reopen through the saved-asset checks. The selected-region CONTINUE callback, landing prefab/settings/material references, loading/confirmation font glyphs and four 1 km / 513-height defaults pass. |
+| Focused numerical check | Seed 73129, one representative inland region, validation-only 1024 × 512 planet maps and production surface resolution. Initial generation: **9.94 s**, **1,128,800 m²** connected gentle dry ground, **560 m** usable square, **7,417** stable objects. |
+| Continuity and placement | Four initial tiles plus two development-only neighbors pass shared edge/corner comparisons, regeneration in a different order, exact repeated heights and object identities, unique ownership, seam/pole projection and cancellation. Full landing/deployment clearance passes eight headings; bounds and an interior obstruction reject placement. |
+| Actual Play Mode flow | One complete 1920 × 1080 run from MainMenu: both immediate loading messages, actual pointer land selection, exact click centering, flag/edge representation, matching surface readiness, pointer placement, confirmation, and BACK TO PLANET with the identical planet cache, view, flag anchor and confirmed landing. No runtime errors or exceptions in this run. |
+| Measured generation | The production 4K planet took **16.01 s**; surface numeric generation took **6.45 s**. That surface measured **1,133,300 m²** connected gentle land and a **560 m** interior square. These are single Editor observations, not general performance guarantees. |
+| Windows x64 | The final three-scene player builds successfully with zero errors and warnings: **102,736,065 bytes**, **27.83 s**. This milestone did not repeat the earlier standalone interaction suite. |
+
+The initial survey holds four 513 × 513 float height arrays (about **4.02 MiB**) and four 128 × 128 × 5 float layer arrays (**1.25 MiB**) before Unity's own TerrainData, water, object and rendering allocations. The existing planet pixel payload remains **117.33 MiB** with **32 MiB** retained CPU classification data. Planet resources stay owned by the setup session while surveying and are released on return to MainMenu. Surface scene resources are recreated from cached numerical data when returning to the same region. No new whole-process or frame-time profiling sweep was performed.
+
+Procedural trees, rocks, deposits and the dropship are placeholder art. The wide starting camera emphasizes surveying the region; closer wheel zoom is available. Broad biome, extreme-input, aspect-ratio and repeated-transition playtesting is left to the user. Recoverable difficult-region handling is implemented, but this focused run does not certify every coast, mountain, seam or polar selection.
+
+Temporary local Play Mode instrumentation is removed before delivery; it is excluded from the Windows player. The saved development seed override is disabled. Local evidence is ignored by Git:
+
+- `Logs/SurfaceGenerationValidation.txt`, `LandingSavedAssets.txt`, `LandingFlowSmoke.txt`, and `PlanetBuild.txt` contain numeric, saved-asset, flow and build results.
+- `Captures/Landing-Loading-Planet.png`, `Landing-Loading-Surface.png`, `Landing-Selected-Globe.png`, `Landing-Far-Side-Indicator.png`, `Landing-Surface-Overview.png`, `Landing-Valid-Placement.png`, and `Landing-Confirmed.png` are actual Unity captures.
+- `Captures/Meridian-Landing-Flow.mp4` is a short edited sequence of actual rendered frames showing the two loading presentations, globe interaction and placement; generation waits are cut and playback timing is compressed.
+
+See [LandingSiteSelection.md](LandingSiteSelection.md) for controls, geographic projection, terrain defaults, readiness criteria, ownership and future expansion boundaries. Durable checks are available under `Meridian > Validate Surface Generation` and `Meridian > Validate Landing Site Saved Assets`.
+
 ## Terrain resolution correction — 2026-09-16
 
 The baseline used 1024 × 512 runtime maps without mipmaps and forced LOD 0. The initial editor preview was only 1101 × 627; baseline and final captures instead use actual 1920 × 1080 and 2560 × 1440 render targets, URP render scale 1 and texture mip limit 0. Comparisons use seed 73129, saved local orientations, unchanged lighting and the full 210% zoom. Coarse graph interpolation, binary coast thresholds and resolution-dependent normal differences were additional bottlenecks. Increasing mesh density was unnecessary.

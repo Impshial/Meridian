@@ -11,4 +11,7 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/_Meridian/Scenes/PlanetSelection.unity
     guid: 03151edf5167bdc4eb1cb2cdca8312b7
+  - enabled: 1
+    path: Assets/_Meridian/Scenes/LandingSiteSelection.unity
+    guid: d2a09a3c9dc57fa4c8a07da1819bb714
   m_configObjects: {}

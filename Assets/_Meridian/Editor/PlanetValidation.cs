@@ -36,7 +36,7 @@ namespace Meridian.Editor
             var back=buttons.Single(b=>b.GetComponentInChildren<TMP_Text>().text=="BACK");
             var next=buttons.Single(b=>b.GetComponentInChildren<TMP_Text>().text=="CONTINUE");
             Require(back.onClick.GetPersistentEventCount()==1 && back.onClick.GetPersistentMethodName(0)=="Back","Missing BACK action.");
-            Require(!next.interactable && next.onClick.GetPersistentEventCount()==0,"CONTINUE must stay disabled and inert.");
+            Require(!next.interactable && next.onClick.GetPersistentEventCount()==1 && next.onClick.GetPersistentMethodName(0)=="Continue","CONTINUE must start disabled and invoke the landing survey when selected.");
             Require(components.OfType<Camera>().Count()==1 && components.OfType<EventSystem>().Count()==1,"Duplicate camera/EventSystem.");
             Require(Shader.Find("Meridian/Planet Surface")?.isSupported==true,"Planet shader unsupported.");
             var viewing=components.OfType<PlanetViewingInput>().Single();
@@ -52,7 +52,7 @@ namespace Meridian.Editor
             var generation=AssetDatabase.LoadAssetAtPath<PlanetGenerationSettings>("Assets/_Meridian/Settings/PlanetGeneration.asset");
             Require(generation.mapWidth==4096 && generation.Snapshot().mapWidth==4096,"Saved terrain maps must actually generate at 4096x2048.");
             EditorSceneManager.OpenScene(MeridianSetup.ScenePath);
-            File.WriteAllText("Logs/PlanetSavedAssets.txt","PASS: two saved scenes, controls, references, shader, camera, EventSystem; 45/63/210% zoom, proportional wheel rate, local button contrast, six water controls; saved 4096x2048 terrain maps.\n");
+            File.WriteAllText("Logs/PlanetSavedAssets.txt","PASS: three-scene flow, controls, references, shader, camera, EventSystem; selection-gated CONTINUE; 45/63/210% zoom, wheel rate, local contrast, six water controls; saved 4096x2048 terrain maps.\n");
         }
 
         [MenuItem("Meridian/Validate Regional Zoom Projection")]
