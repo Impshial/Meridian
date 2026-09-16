@@ -61,6 +61,7 @@ namespace Meridian
                 var tile=GenerateTile(world,new Vector2Int(x,z),cancellation);tiles[index++]=tile;allObjects.AddRange(tile.Objects);
             }
             world.Tiles=tiles;world.Objects=allObjects.ToArray();
+            world.TreeGroves=CollectTreeGroves(world,world.Objects);
             var landing=LandingPlacement.Evaluate(world,world.PlainCentre,0);
             if(!landing.Valid)
             {
@@ -100,7 +101,7 @@ namespace Meridian
                 best=score;selected=centre;selectedHeight=total/samples;
             }
             if(float.IsNegativeInfinity(best))throw new SurfaceSurveyException("The selected region is too narrow or divided by water for a safe colony plain. Return to the planet and choose nearby land.");
-            world.PlainCentre=selected;world.PlainHeight=selectedHeight;world.ShapePlain=true;
+            world.PlainCentre=selected;world.PlainHeight=selectedHeight+world.Parameters.colonyPlateauHeight;world.ShapePlain=true;
         }
 
         internal static SurfaceSample Sample(SurfaceWorldData world,float x,float z)
@@ -159,14 +160,16 @@ namespace Meridian
             {waterLevel=riverLevel;if(riverDistance<=0)water=PlanetWater.River;}
             float waterDistance=Mathf.Min(coastDistance,riverDistance);
             float broad=elevation*p.elevationScale;
-            float undulation=Noise(world.Seed,x/230,z/230,1)*(biome==PlanetBiome.Rock?22:8);
-            float fine=Noise(world.Seed,x/75,z/75,2)*.65f+Noise(world.Seed,x/24,z/24,3)*.18f;
-            float height=broad+(undulation+fine)*Smooth(10,100,waterDistance);
+            // Hundreds-of-metres landforms create readable silhouettes and ramps. Small noisy height variations
+            // used to reject otherwise flat-looking footprints, so sub-ship-scale roughness is deliberately tiny.
+            float relief=Landforms(world,x,z)*(biome==PlanetBiome.Rock?1.35f:biome==PlanetBiome.Desert?.75f:1);
+            float fine=Noise(world.Seed,x/160,z/160,2)*.12f;
+            float height=broad+(relief+fine)*Smooth(20,140,waterDistance);
             if(world.ShapePlain)
             {
                 float plain=1-Smooth(p.plainRadius,p.plainRadius+p.plainBlend,(point-world.PlainCentre).magnitude);
                 plain*=Smooth(20,90,waterDistance);
-                float target=world.PlainHeight+Noise(world.Seed,x/90,z/90,4)*.35f+Noise(world.Seed,x/30,z/30,5)*.12f;
+                float target=world.PlainHeight+Noise(world.Seed,x/180,z/180,4)*.10f;
                 height=Mathf.Lerp(height,target,plain);
             }
             if(mappedKind==PlanetWater.Ocean || mappedKind==PlanetWater.Lake)
@@ -223,7 +226,7 @@ namespace Meridian
                     float wx=tile.Origin.x+(x+.5f)*p.tileSize/alpha,wz=tile.Origin.y+(z+.5f)*p.tileSize/alpha;
                     SurfaceSample sample=Sample(world,wx,wz);
                     float snow=1-Smooth(.13f,.24f,sample.Temperature),sand=Smooth(.38f,.60f,sample.Temperature)*(1-Smooth(.30f,.43f,sample.Moisture));
-                    float slope=world.Slope(wx,wz),rock=Smooth(22,43,slope);
+                    float slope=world.Slope(wx,wz),rock=Smooth(12,29,slope)*.88f;
                     if(sample.Biome==PlanetBiome.Rock)rock=Mathf.Max(rock,.6f);
                     float wet=(1-Smooth(0,15,sample.WaterDistance))*.8f;
                     float grass=Mathf.Max(.03f,(1-snow)*(1-sand)*(1-rock));
@@ -295,7 +298,8 @@ namespace Meridian
                     var owner=new Vector2Int(Mathf.FloorToInt(wx/p.tileSize),Mathf.FloorToInt(wz/p.tileSize));
                     if(owner!=address || (new Vector2(wx,wz)-world.PlainCentre).sqrMagnitude<90*90)continue;
                     var sample=Sample(world,wx,wz);if(!sample.IsLand || sample.WaterDistance<6 || world.Slope(wx,wz)>34)continue;
-                    float roll=Random01(world.Seed,x,z,12);SurfaceObjectKind kind;float scale,radius;
+                    float roll=Random01(world.Seed,x,z,12);SurfaceObjectKind kind;float scale,radius,height=0;
+                    string groupId=null;Vector2Int groupCell=default;int wood=0;
                     if(roll<.0045f)
                     {
                         kind=sample.Biome==PlanetBiome.Snow?SurfaceObjectKind.Ice:Random01(world.Seed,x,z,13)>.5f?SurfaceObjectKind.Iron:SurfaceObjectKind.Copper;
@@ -303,14 +307,93 @@ namespace Meridian
                     }
                     else if(roll<.075f || (sample.Biome==PlanetBiome.Rock && roll<.32f))
                     {kind=SurfaceObjectKind.Rock;scale=Mathf.Lerp(1,3,Random01(world.Seed,x,z,14));radius=scale;}
-                    else if((sample.Biome==PlanetBiome.Forest && roll<.62f) || (sample.Biome==PlanetBiome.Plains && roll<.11f))
-                    {kind=SurfaceObjectKind.Tree;scale=Mathf.Lerp(.75f,1.45f,Random01(world.Seed,x,z,14));radius=2*scale;}
-                    else continue;
+                    else
+                    {
+                        float grove=GroveStrength(world,wx,wz,sample,out groupCell);
+                        if(grove<=0 || roll>=.075f+grove*.83f)continue;
+                        kind=SurfaceObjectKind.Tree;float growth=Random01(world.Seed,x,z,14);
+                        radius=Mathf.Lerp(3,5,growth);height=Mathf.Lerp(12,20,growth);scale=height/16;
+                        wood=Mathf.RoundToInt(radius*height*.8f);groupId=GroveId(world,groupCell);
+                    }
                     result.Add(new SurfaceObjectData {Id=$"{world.RegionId}:{x}:{z}:{(int)kind}",Owner=owner,Kind=kind,
-                        Position=new Vector3(wx,sample.Height,wz),Radius=radius,Scale=scale,Yaw=Random01(world.Seed,x,z,15)*360});
+                        Position=new Vector3(wx,sample.Height,wz),Radius=radius,Scale=scale,Height=height,Yaw=Random01(world.Seed,x,z,15)*360,
+                        ResourceGroupId=groupId,ResourceGroupCell=groupCell,WoodAmount=wood});
                 }
             }
             return result.ToArray();
+        }
+
+        static float Landforms(SurfaceWorldData world,float x,float z)
+        {
+            var p=world.Parameters;float spacing=p.landformSpacing;
+            int cellX=Mathf.FloorToInt(x/spacing),cellZ=Mathf.FloorToInt(z/spacing);float result=0;
+            for(int iz=cellZ-1;iz<=cellZ+1;iz++)for(int ix=cellX-1;ix<=cellX+1;ix++)
+            {
+                uint h=Hash(world.Seed,ix,iz,41),k=Hash(world.Seed,ix,iz,42);
+                float Unit(uint value)=>(value&1023)/1023f;
+                float cx=(ix+.5f+(Unit(h)-.5f)*.22f)*spacing,cz=(iz+.5f+(Unit(h>>10)-.5f)*.22f)*spacing;
+                float radius=spacing*Mathf.Lerp(.46f,.63f,Unit(h>>20));
+                float dx=x-cx,dz=z-cz,squared=dx*dx+dz*dz;
+                if(squared>=radius*radius)continue;
+                float q=Mathf.Sqrt(squared)/radius;
+                float height=p.broadReliefHeight*Mathf.Lerp(.72f,1.20f,Unit(k));
+                // Both profiles have zero derivative at their top and foot. Shelves have broad flat summits;
+                // intervening hollows remain open, and overlap blends through addition rather than hard ridges.
+                bool shelf=Unit(k>>10)<.44f;
+                float weight=shelf?1-Smooth(.36f,1,q):1-Smooth(0,1,q);
+                result+=height*weight;
+            }
+            return result;
+        }
+
+        static void GroveShape(SurfaceWorldData world,Vector2Int cell,out Vector2 centre,out float radius)
+        {
+            var p=world.Parameters;
+            centre=new Vector2(cell.x+.5f+(Random01(world.Seed,cell.x,cell.y,61)-.5f)*.24f,
+                cell.y+.5f+(Random01(world.Seed,cell.x,cell.y,62)-.5f)*.24f)*p.groveSpacing;
+            radius=p.groveRadius*Mathf.Lerp(.82f,1.14f,Random01(world.Seed,cell.x,cell.y,63));
+        }
+
+        static float GroveStrength(SurfaceWorldData world,float x,float z,SurfaceSample sample,out Vector2Int group)
+        {
+            float presence=sample.Biome==PlanetBiome.Forest?.94f:sample.Biome==PlanetBiome.Plains?.33f:
+                sample.Biome==PlanetBiome.Snow && sample.Temperature>.095f && sample.Moisture>.50f?.22f:0;
+            group=default;if(presence==0)return 0;
+            int cx=Mathf.FloorToInt(x/world.Parameters.groveSpacing),cz=Mathf.FloorToInt(z/world.Parameters.groveSpacing);
+            float strongest=0;Vector2 point=new Vector2(x,z);
+            for(int iz=cz-1;iz<=cz+1;iz++)for(int ix=cx-1;ix<=cx+1;ix++)
+            {
+                if(Random01(world.Seed,ix,iz,64)>presence)continue;
+                var cell=new Vector2Int(ix,iz);GroveShape(world,cell,out Vector2 centre,out float radius);
+                float distance=(point-centre).magnitude;
+                if(distance>=radius)continue;
+                float strength=1-Smooth(radius*.60f,radius,distance);
+                if(strength<=strongest)continue;
+                strongest=strength;group=cell;
+            }
+            return strongest;
+        }
+
+        static string GroveId(SurfaceWorldData world,Vector2Int cell)=>$"{world.RegionId}:grove:{cell.x}:{cell.y}";
+
+        /// <summary>Aggregate only available members, retaining each grove's fixed logical anchor across tile boundaries.</summary>
+        public static TreeGroveData[] CollectTreeGroves(SurfaceWorldData world,IEnumerable<SurfaceObjectData> objects)
+        {
+            var groups=new Dictionary<string,TreeGroveData>(StringComparer.Ordinal);
+            foreach(var obj in objects)
+            {
+                if(obj.Kind!=SurfaceObjectKind.Tree || string.IsNullOrEmpty(obj.ResourceGroupId))continue;
+                if(!groups.TryGetValue(obj.ResourceGroupId,out var group))
+                {
+                    GroveShape(world,obj.ResourceGroupCell,out Vector2 centre,out float radius);
+                    group=new TreeGroveData {Id=obj.ResourceGroupId,Position=new Vector3(centre.x,world.Sample(centre).Height,centre.y),Radius=radius+5};
+                    groups.Add(obj.ResourceGroupId,group);
+                }
+                group.TreeCount++;group.WoodAmount+=obj.WoodAmount;
+            }
+            var ids=new List<string>(groups.Keys);ids.Sort(StringComparer.Ordinal);var result=new TreeGroveData[ids.Count];
+            for(int i=0;i<ids.Count;i++)result[i]=groups[ids[i]];
+            return result;
         }
 
         static void MeasureBuildable(SurfaceWorldData world,CancellationToken token)

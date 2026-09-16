@@ -97,7 +97,7 @@ namespace Meridian
                 Quaternion rotation=Quaternion.Euler(0,item.Yaw,0);
                 if(item.Kind==SurfaceObjectKind.Tree)
                 {
-                    float radius=Mathf.Max(.5f,item.Radius),height=radius*4.2f;
+                    float radius=Mathf.Max(.5f,item.Radius),height=item.Height>0?item.Height:radius*4.2f;
                     geometry.Cone(item.Position+Vector3.up*height*.17f,radius,height*.72f,rotation,7);
                     geometry.Cone(item.Position+Vector3.up*height*.48f,radius*.72f,height*.55f,rotation,7);
                     var trunkKey=new Vector3Int(key.x,key.y,5);

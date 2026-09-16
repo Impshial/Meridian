@@ -41,11 +41,24 @@ namespace Meridian
     public sealed class SurfaceObjectData
     {
         public string Id;
+        public string ResourceGroupId;
+        public Vector2Int ResourceGroupCell;
+        public int WoodAmount;
         public SurfaceObjectKind Kind;
         public Vector3 Position;
         public Vector2Int Owner;
-        public float Radius,Yaw,Scale;
+        public float Radius,Yaw,Scale,Height;
         public bool Blocking=true;
+    }
+
+    /// <summary>Timber available from generated members of a stable, cross-tile grove; no harvesting simulation yet.</summary>
+    [Serializable]
+    public sealed class TreeGroveData
+    {
+        public string Id;
+        public Vector3 Position;
+        public float Radius;
+        public int TreeCount,WoodAmount;
     }
 
     public sealed class SurfaceWaterMesh
@@ -81,7 +94,7 @@ namespace Meridian
     /// <summary>Numerical session data only. Rendering resources belong to the scene, not this record.</summary>
     public sealed class SurfaceWorldData
     {
-        public const string GeneratorVersion="meridian-surface-1";
+        public const string GeneratorVersion="meridian-surface-2";
         public string Version=>GeneratorVersion;
         public int Seed=>Planet.Seed;
         public readonly string RegionId;
@@ -90,6 +103,7 @@ namespace Meridian
         public readonly Rect Bounds;
         public SurfaceTileData[] Tiles {get;internal set;}
         public SurfaceObjectData[] Objects {get;internal set;}
+        public TreeGroveData[] TreeGroves {get;internal set;}
         public LandingCandidate DefaultLanding {get;internal set;}
         public float BuildableArea {get;internal set;}
         public float InteriorClearance {get;internal set;}

@@ -1,5 +1,25 @@
 # Validation
 
+## Surface relief, timber and navigation correction — 2026-09-16
+
+Surface generator `meridian-surface-2` replaces small undulations with broad hills, shelves and a raised colony plateau. Default added landform height is 100 m with 650 m spacing; the safe plain is lifted 35 m and blends through a 220 m ramp. Sub-metre roughness is reduced. Exposed stone, lower-angle lighting and survey-distance shadows make slopes readable. Placement still checks the same actual terrain heightfield and full footprint; failure text now reports the measured slope or height difference instead of suggesting that absolute altitude is invalid.
+
+Trees form deterministic timber groves with open ground between them. Per-tree dimensions, group IDs and wood amounts persist in the numerical data; group totals count currently generated members. Trees remain placement obstacles. Harvesting and inventory are not implemented yet.
+
+Verification stayed focused: one representative numeric region, one brief in-engine surface/input check, saved-asset validation and a Windows build. No broad biome or repeated-transition sweep was run.
+
+| Check | Result |
+| --- | --- |
+| Geography and readiness | Seed 73129, same representative region and production 513-height tiles, validation-only 1024 × 512 planet maps. **7.61 s** numeric generation; **298,100 m²** connected gentle ground; **430 m** usable interior. |
+| Visible relief | Sampled dry heights **41.5–403.1 m**; local landforms contribute up to **108.6 m** over shared broad geography. **991** coarse samples exceed 12° while the protected clearing accepts all eight deployment headings. |
+| Timber | **2,383 trees**, **41 groves**, **125,122 wood units**. Tree dimensions and exact aggregate totals pass; neighboring tile aggregation preserves group anchors and existing timber quantities. |
+| Continuity and placement | Existing tile edge/corner, regeneration, object ownership, full-footprint, obstruction, boundary and cancellation checks pass. |
+| Actual input | At 1920 × 1080, wheel changes pitch without changing heading/distance; middle-drag pans with fixed heading/pitch; Q/E each produce exactly one 45° turn. Keyboard +/- retains zoom, WASD/arrows and Home remain available. |
+| Visual inspection | `Captures/Survey-Relief-And-Timber.png` and `Survey-Relief-Low-Angle.png` show the terrain slopes, plateau, grouped trees and timber labels. This surface generated numerically in **7.71 s**. |
+| Windows x64 | Final three-scene build succeeds with **zero errors and warnings**, **102,790,081 bytes**, **46.80 s**. |
+
+Logs: `Logs/SurfaceGenerationValidation.txt`, `SurveyCorrectionSmoke.txt`, `LandingSavedAssets.txt`, `PlanetBuild.txt`. These logs and captures are local ignored artifacts. The temporary input/capture runner is excluded from the player and removed from Assets before delivery. The existing planet generation, menu, water geography and globe controls remain unchanged.
+
 ## Milestone 3 — landing-site selection, 2026-09-16
 
 Validation was deliberately kept focused at the user's request. This section supersedes earlier statements that planet CONTINUE is inert or that leaving the globe always destroys its data. Unity, packages, menu artwork, planet generation and 4K appearance defaults are preserved.

@@ -11,8 +11,10 @@ CONTINUE becomes available after selecting land. It immediately shows `Loading L
 | Surface control | Action |
 | --- | --- |
 | WASD / arrows | Pan relative to the camera's horizontal heading |
-| Wheel | Smooth zoom; button-owned scrolling is ignored |
-| Middle-drag | Orbit and change overhead pitch |
+| Wheel | Smoothly tilt the overhead view; button-owned scrolling is ignored |
+| Middle-drag | Grab and pan horizontally on the X/Z plane; heading and tilt stay unchanged |
+| Q / E | Turn the camera heading by exactly −45° / +45° per press |
+| + / − | Smooth keyboard zoom; the main keyboard's = key and numpad +/− are supported |
 | Left-click valid ground | Lock or replace the landing candidate |
 | R / Shift+R | Turn the preview ±45 degrees; revalidate a locked candidate |
 | Right-click / Esc | Clear an unconfirmed candidate and resume positioning |
@@ -20,11 +22,11 @@ CONTINUE becomes available after selecting land. It immediately shows `Loading L
 | LAND HERE | Revalidate and confirm the locked candidate |
 | BACK TO PLANET | Restore the planet, selection, rotation, and zoom |
 
-The surface camera starts 730 m from its focus, with nominal 95–1,250 m zoom and 42–78° pitch. Framing and terrain clearance can further constrain its pose. Confirmation freezes placement editing, leaves the marker visible, and keeps the camera and BACK TO PLANET available. Choosing another planet region clears the previous surface, candidate, and confirmation.
+The surface camera has nominal 95–1,250 m zoom, a requested initial distance of 730 m, and 42–78° pitch. One aspect-dependent distance limit reserves a ground-facing frustum that fits the generated survey at every allowed heading and pitch. On the default 2 km survey at 16:9, this tightens the maximum and initial distance to approximately **500 m**. The same limit applies throughout camera turns and tilts, so the wheel does not also change zoom. Panning stays inside the survey, and the lens maintains at least 24 m terrain clearance. Confirmation freezes placement editing, leaves the marker visible, and keeps the camera and BACK TO PLANET available. Choosing another planet region clears the previous surface, candidate, and confirmation.
 
 ## Geography and coordinates
 
-`SurfaceGenerationSettings` records the prototype defaults; `SurfaceParameters` is its serializable snapshot. The generator version is `meridian-surface-1`, and setup records use `meridian-setup-1`.
+`SurfaceGenerationSettings` records the prototype defaults; `SurfaceParameters` is its serializable snapshot. The generator version is **`meridian-surface-2`**, and setup records use `meridian-setup-1`. Version 2 changes local relief and tree distribution; its generated surface is not identical to a version 1 surface for the same planet location.
 
 One Unity unit is one metre. Each colony has a frozen tangent frame anchored to the selected unit direction: local +X is east, +Z is north, and +Y is height. With mapping radius **30,000 m**, the geographic direction at logical `(x,z)` is:
 
@@ -34,7 +36,7 @@ normalize(anchor + east * x / mappingRadius + north * z / mappingRadius)
 
 This is a gnomonic projection without visible planetary curvature. Near the exact poles, a deterministic reference axis replaces the usual east calculation; the resulting basis is recorded once. Longitude continues to wrap through planet-local directions. Planet conventions remain north +Y, longitude zero toward +Z, and positive longitude toward +X.
 
-Physical broad elevation uses the graph elevation multiplied by **1,200 m**, independently of the globe's visual relief. Sea level is zero. Every terrain tile shares the same height datum: minimum −400 m and 2,400 m height range. Shared graph climate supplies biome character; deterministic local undulations add detail.
+Physical broad elevation uses the graph elevation multiplied by **1,200 m**, independently of the globe's visual relief. Sea level is zero. Every terrain tile shares the same height datum: minimum −400 m and 2,400 m height range. Shared graph climate supplies biome character. Version 2 uses broad hills and flat-topped shelves with a configurable **100 m relief amplitude** and **650 m landform spacing**, plus much smaller fine noise. These are shape parameters, not guarantees that every hill has exactly that height or spacing; climate, neighboring forms, waterways, and colony shaping affect the final terrain.
 
 Ocean and lake membership use the planet's smoothed, bilinear surface boundary and nearest water category. Physical rivers instead follow authoritative downstream graph edges, with configurable **9–24 m full widths**; the globe's exaggerated river bands are not copied into surface waterways. Connected lake basins share a filled-drainage water elevation, and river elevations follow their drainage route. Terrain channels and clipped water meshes use this same local sampler.
 
@@ -44,7 +46,7 @@ A selected gameplay region owns the colony frame and survey state. Rendering til
 
 `SurfaceWorldData.GenerateTile(address, cancellation)` is the extension API. It returns a neighbor's numerical data without modifying the active survey or moving its origin. Heights derive from integer global sample coordinates, so shared borders are identical. Generation uses global logical coordinates and stable hashes, not a random sequence dependent on tile order. Terrain neighbors are connected after main-thread creation.
 
-The generator searches for a dry site and shapes a fixed plain or plateau with a 260 m inner radius and 220 m transition. It protects mapped water and drainage channels. A 90 m clearing around the fixed plain center provides landing access; moving the preview never reshapes terrain.
+The generator searches for a dry site and shapes a fixed plain or plateau with a **260 m inner radius**, **220 m transition**, and default **35 m rise** above the surveyed local height. It protects mapped water and drainage channels. Fine variation on the plateau is reduced to keep its broad interior useful. A 90 m clearing around the fixed plain center provides landing access; moving the preview never reshapes terrain.
 
 Readiness requires at least **90,000 m²** of connected dry terrain with sampled slopes no greater than **5°**, plus a fully usable square at least **200 m** across. Measurement uses 10 m cells, shore clearance, connected components, and an all-usable interior-square calculation. This measures terrain potential: future-clearable vegetation is allowed in the wider buildable area. All trees, rocks, and deposits still obstruct the immediate landing footprint. Narrow islands or regions divided by water can fail with a recoverable message; generation does not reseed or relocate the selected region.
 
@@ -52,16 +54,16 @@ Readiness requires at least **90,000 m²** of connected dry terrain with sampled
 
 Default hull dimensions are **14 × 26 m**, with **18 m rear deployment access** and **5 m safety margin**. The complete tested rectangle is therefore **24 × 54 m**, rotated with the ship. Checks sample it at up to 2 m spacing and reject water, boundaries, obstructions, slopes above 7°, or height variation above 1.8 m. Height and slope checks use the generated heightfield. The preview remains level and is revalidated on rotation and confirmation.
 
-Objects originate from stable 18 m logical cells, with deterministic jitter and half-open tile ownership. IDs include the seed, quantized region direction, cell address, and type. Neighbor enumeration includes a margin before ownership filtering. Reloading a tile preserves object types and positions. Iron, copper, and ice are prototype resource types; extraction is not implemented.
+Objects originate from stable 18 m logical cells, with deterministic jitter and half-open tile ownership. IDs include the seed, quantized region direction, cell address, and type. Neighbor enumeration includes a margin before ownership filtering. Reloading a tile preserves object types and positions. Iron, copper, and ice remain prototype resource types.
 
-Trees, rocks, deposits, ground textures, and the recognizable dropship are procedural placeholder art. Trees and rocks are batched into spatial meshes. Terrain uses small repeating ground textures rather than stretching the globe image over the landscape. Resource/water annotations are decorative and bounded in number.
+Trees form biome-dependent groves with default **320 m spacing** and **125 m nominal radius**, varied deterministically per grove. Individual trees have **3–5 m radii** and **12–20 m recorded heights**. Each tree retains its own obstruction and resource identity, plus a stable grove ID and a prototype wood amount of **29–80 units**. `TreeGroveData` aggregates member counts and wood amounts through `SurfaceGenerator.CollectTreeGroves`. Totals include only the supplied, available generated members; a partially generated grove does not claim the resources of unloaded neighbors. Its group ID and logical anchor stay fixed when more members become available. This establishes resource data and survey annotations; harvesting mechanics, extraction, inventory, and resource consumption are not implemented.
+
+Trees, rocks, deposits, ground textures, and the recognizable dropship are procedural placeholder art. Trees and rocks are batched into spatial meshes. Terrain uses small repeating ground textures rather than stretching the globe image over the landscape. Resource/water annotations are decorative and bounded in number. Surface daylight now uses a 32° directional light and lower ambient illumination to make slopes, shelves, and larger trees readable. The saved URP asset uses a 1,600 m shadow distance with four cascades.
 
 The in-memory `SetupSession` owns the geographic data, one reusable planet mesh/material/texture cache, surface numerical data, and versioned setup record. The landing record includes the ground height at its center independently of the level ship's support elevation. This permits return to the same globe without duplicating 4K maps or requiring released appearance buffers. Surface TerrainData, meshes, materials, textures, and colliders belong to the scene and are destroyed on exit; numerical data remains for the same-region return. Workers are cancellable, and region revisions reject stale results. There is no disk save/load or general terrain-streaming system yet.
 
 ## Focused validation and limits
 
-The focused numeric check passed for seed 73129 at direction approximately `(0.57,-0.62,0.53)`: **9.94 seconds** initial surface generation, **1,128,800 m²** connected buildable terrain, a **560 m** usable square, and **7,417** stable objects. It used validation-only 1024 × 512 planet maps and the production 513 × 513 surface resolution.
-
-Checks covered initial and adjacent-tile borders/corners, regeneration after a different tile order, object identity/ownership, polar and seam projection, the full footprint at eight headings, boundary/obstruction rejection, and cancellation. This is one representative numerical region, not a visual or performance certification of every biome. See [Validation.md](Validation.md) for the current integration evidence. Broad manual playtesting remains with the user.
+See [Validation.md](Validation.md) for dated checks and generation measurements. Earlier milestone measurements describe `meridian-surface-1`; they are historical evidence and do not measure the current version 2 terrain, grove counts, or performance. The focused validator covers deterministic tiles, adjacent borders/corners, object and grove identity/ownership, projection, landing-footprint rejection, and cancellation. Broad manual playtesting remains with the user; a representative numerical region does not certify every biome or camera position.
 
 The projection and scales are prototype mappings, not an Earth-scale simulation. Local shaping adds a colony plain to the shared regional geography; it does not reproduce an erosion simulation or certify every surrounding tile for construction. The extension API establishes continuity, but expansion unlocks, distant streaming, arrival animation, and colony gameplay remain later work.

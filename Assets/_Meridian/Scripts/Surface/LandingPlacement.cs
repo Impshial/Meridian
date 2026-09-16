@@ -31,10 +31,11 @@ namespace Meridian
                     return new PlacementResult(false,"Deployment area crosses the survey boundary");
                 SurfaceSample sample=world.Sample(at);
                 if(!sample.IsLand)return new PlacementResult(false,"Deployment area overlaps water");
-                if(world.GroundSlope(at.x,at.y)>p.maximumLandingSlope)return new PlacementResult(false,"Ground is too steep for landing");
+                float slope=world.GroundSlope(at.x,at.y);
+                if(slope>p.maximumLandingSlope)return new PlacementResult(false,$"Slope {slope:F1}° exceeds the {p.maximumLandingSlope:F1}° landing limit");
                 float ground=world.GroundHeight(at.x,at.y);
                 low=Mathf.Min(low,ground);high=Mathf.Max(high,ground);
-                if(high-low>p.maximumLandingVariation)return new PlacementResult(false,"Ground is too uneven for a level landing");
+                if(high-low>p.maximumLandingVariation)return new PlacementResult(false,$"Ground changes {high-low:F1} m across deployment area (limit {p.maximumLandingVariation:F1} m)");
             }
             if(world.Objects!=null)foreach(var obj in world.Objects)
             {

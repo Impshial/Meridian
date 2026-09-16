@@ -99,9 +99,9 @@ namespace Meridian
             LandingCandidate initial=session.Candidate??World.DefaultLanding;
             surveyCamera.Initialize(camera,World.Bounds,initial.logicalPosition,World.GroundHeight,presentation.OverUI);
             var light=new GameObject("Surface daylight",typeof(Light)).GetComponent<Light>();light.transform.SetParent(transform,false);
-            light.type=LightType.Directional;light.transform.rotation=Quaternion.Euler(48,-32,0);light.intensity=1.25f;
+            light.type=LightType.Directional;light.transform.rotation=Quaternion.Euler(32,-52,0);light.intensity=1.35f;
             light.color=new Color(1,.95f,.86f);light.shadows=LightShadows.Soft;light.shadowStrength=.65f;
-            RenderSettings.skybox=null;RenderSettings.ambientMode=AmbientMode.Flat;RenderSettings.ambientLight=new Color(.48f,.53f,.57f);
+            RenderSettings.skybox=null;RenderSettings.ambientMode=AmbientMode.Flat;RenderSettings.ambientLight=new Color(.30f,.35f,.40f);
             RenderSettings.fog=false;
             preview=Instantiate(previewPrefab,transform);preview.gameObject.SetActive(true);preview.Initialize(World.Parameters,waterMaterial);
             heading=initial.yaw;previewPosition=new Vector2(initial.logicalPosition.x,initial.logicalPosition.z);hasPosition=true;

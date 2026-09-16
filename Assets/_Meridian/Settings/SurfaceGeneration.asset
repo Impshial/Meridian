@@ -19,6 +19,9 @@ MonoBehaviour:
   alphamapResolution: 128
   minimumTerrainHeight: -400
   terrainHeightRange: 2400
+  broadReliefHeight: 100
+  landformSpacing: 650
+  colonyPlateauHeight: 35
   minimumRiverWidth: 9
   maximumRiverWidth: 24
   minimumBuildableArea: 90000
@@ -28,6 +31,8 @@ MonoBehaviour:
   plainRadius: 260
   plainBlend: 220
   objectCellSize: 18
+  groveSpacing: 320
+  groveRadius: 125
   shipWidth: 14
   shipLength: 26
   accessLength: 18
