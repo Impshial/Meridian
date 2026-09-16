@@ -39,8 +39,46 @@ namespace Meridian.Editor
             Require(!next.interactable && next.onClick.GetPersistentEventCount()==0,"CONTINUE must stay disabled and inert.");
             Require(components.OfType<Camera>().Count()==1 && components.OfType<EventSystem>().Count()==1,"Duplicate camera/EventSystem.");
             Require(Shader.Find("Meridian/Planet Surface")?.isSupported==true,"Planet shader unsupported.");
+            var viewing=components.OfType<PlanetViewingInput>().Single();
+            var zoom=new SerializedObject(viewing);
+            Require(Mathf.Approximately(zoom.FindProperty("initialFraming").floatValue,.63f) &&
+                Mathf.Approximately(zoom.FindProperty("minimumFraming").floatValue,.45f) &&
+                Mathf.Approximately(zoom.FindProperty("maximumFraming").floatValue,2.1f),"Saved zoom must be 45% / 63% / 210%, including cropped close views.");
+            Require(Mathf.Approximately(zoom.FindProperty("zoomPerTick").floatValue,.1f),"Saved proportional wheel rate changed.");
+            foreach(var button in buttons)Require(button.GetComponent<Image>().color.a>=.5f,"Planet control needs local contrast over enlarged terrain.");
+            var material=AssetDatabase.LoadAssetAtPath<Material>("Assets/_Meridian/Art/Materials/PlanetSurface.mat");
+            foreach(string property in new[]{"_RippleStrength","_WaterDetailScale","_WaterSpeed","_WaterRoughness","_GlintStrength","_DepthContribution"})
+                Require(material.HasProperty(property),"Missing water tuning property: "+property);
             EditorSceneManager.OpenScene(MeridianSetup.ScenePath);
-            File.WriteAllText("Logs/PlanetSavedAssets.txt","PASS: two saved scenes, controls, references, shader, camera, EventSystem.\n");
+            File.WriteAllText("Logs/PlanetSavedAssets.txt","PASS: two saved scenes, controls, references, shader, camera, EventSystem; 45/63/210% zoom, proportional wheel rate, local button contrast, six water controls.\n");
+        }
+
+        [MenuItem("Meridian/Validate Regional Zoom Projection")]
+        public static void ZoomProjection()
+        {
+            // Exercise the actual runtime projection function, including its authored defaults.
+            const System.Reflection.BindingFlags flags=System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic;
+            var cameraObject=new GameObject("Projection validation camera",typeof(Camera));
+            var globeObject=new GameObject("Projection validation globe",typeof(PlanetGlobe));
+            var inputObject=new GameObject("Projection validation input",typeof(PlanetViewingInput));
+            try
+            {
+                var camera=cameraObject.GetComponent<Camera>();camera.transform.position=new Vector3(0,0,-4);
+                var input=inputObject.GetComponent<PlanetViewingInput>();input.Configure(camera,globeObject.GetComponent<PlanetGlobe>(),null);
+                var type=typeof(PlanetViewingInput);
+                Require(Mathf.Approximately((float)type.GetField("maximumFraming",flags).GetValue(input),2.1f),"New components retained obsolete close limit.");
+                foreach(float framing in new[]{.45f,.63f,2.1f})
+                {
+                    type.GetField("targetFraming",flags).SetValue(input,framing);
+                    type.GetField("currentFraming",flags).SetValue(input,framing);
+                    type.GetMethod("ApplyFraming",flags).Invoke(input,null);
+                    float measured=1.005f/Mathf.Sqrt(16-1.005f*1.005f)/Mathf.Tan(camera.fieldOfView*Mathf.Deg2Rad*.5f);
+                    Require(Mathf.Abs(measured-framing)<.0001f,"Runtime projection does not reach requested diameter: "+framing);
+                }
+                Require(camera.transform.position==new Vector3(0,0,-4) && camera.transform.rotation==Quaternion.identity && globeObject.transform.localScale==Vector3.one,"Zoom moved camera or scaled globe.");
+                File.WriteAllText("Logs/PlanetZoomValidation.txt","PASS: runtime projection reaches 45%, 63%, 210%; new component defaults; fixed camera transform and globe scale.\n");
+            }
+            finally{UnityEngine.Object.DestroyImmediate(inputObject);UnityEngine.Object.DestroyImmediate(globeObject);UnityEngine.Object.DestroyImmediate(cameraObject);}
         }
 
         [MenuItem("Meridian/Validate Planet Generation and Gestures")]

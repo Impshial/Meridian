@@ -1,5 +1,34 @@
 # Validation
 
+## Water and regional zoom correction — 2026-09-15
+
+This correction supersedes the original whole-globe fit requirement and its historical framing captures below. Generator code, shared geographic sampling, packages, menu artwork, lighting, flag geometry and coordinates are unchanged.
+
+| Check | Result |
+| --- | --- |
+| Actual projection | Runtime camera calculation measures 0.45 wide, 0.63 initial and 2.10 close at both 1920 × 1080 and 1280 × 1024. Close FOV is 14.09294° at distance 4 with a 1.005 terrain envelope; approximately 3.23× the previous effective 65% close view. Cropping is intentional. |
+| Input | Extreme positive/negative wheel input clamps; three negative ticks produce the expected exp(-0.3) factor. Wheel over BACK and disabled CONTINUE is ignored. UI-owned drags, out-and-back globe drags and focus-loss capture reset pass. |
+| Selection and flag | Seam/polar land planting, ocean/lake/river rejection, rotation during planting, stable local anchor, natural offscreen movement, far-side depth occlusion and single-marker reuse pass. Camera position/rotation and globe scale remain unchanged. |
+| Water comparison | Original and corrected shaders rendered against the exact same seed-73129 map objects, globe orientation, camera and fixed key. Overview and 210% close images show broken-up liquid reflections and retained coastlines, terrain and ice. |
+| Motion | A 13-second 1280 × 720 recording contains 260 actual Unity frames at 20 fps, including normalized wheel input from wide to close and a stationary close hold. Water changes during the hold without regenerated maps or mesh. |
+| Lifetime | Three additional editor and three standalone BACK/reentry cycles pass. Five generated Unity resources while visiting; zero in the menu; no runtime errors. |
+| Durable checks | Saved-scene validation now checks 45/63/210% settings, wheel rate, local control contrast and six water material controls. `Meridian > Validate Regional Zoom Projection` exercises the actual runtime projection method and component defaults. Original geography/gesture and menu checks remain available. |
+| Windows x64 | Final build succeeded with zero errors and warnings, 102,591,175 bytes, 44.43 seconds. The final visible player repeated projection/input/selection checks and BACK during planting with no runtime errors. Fixed-seed generation measured 5.13 seconds in that run. |
+
+Additional close captures inspect lake, river, longitude seam and polar ice. Frozen-water rejection, globe-owned release over BACK, and BACK while the flag is planting are checked separately. Local control backplates preserve button contrast over enlarged terrain. No marker resizing was needed.
+
+Changed files: `PlanetSurface.shader` and `PlanetSurface.mat` implement/tune water; `PlanetViewingInput.cs` and `PlanetSelection.unity` update runtime and saved framing; `PlanetSelectionAuthoring.cs` retains those defaults and local button contrast when explicitly authoring; `PlanetValidation.cs` adds focused saved-asset/projection checks; README and the two planet/validation documents describe the revised behavior. Temporary test scripts and the original comparison shader are removed from Assets after testing. The ignored smoke build enables its local file-based runner only with `-meridian-water-test`.
+
+There are no new water textures, render targets or per-frame uploads. The existing 6 MiB map payload, 5,120 triangles and 40,962 geographic samples are unchanged. The close view exposes the existing orbital map resolution and symbolic river widths; this correction does not supply local terrain or physically scaled waves.
+
+Evidence is local and ignored by Git:
+
+- `Captures/Water-Before-After.png`, `Water-Before-0.63.png`, `Water-After-0.63.png`, `Water-Before-2.10.png`, `Water-After-2.10.png` — identical-view shader comparisons.
+- `Captures/Meridian-Water-And-Zoom.mp4` — actual Unity water animation and wide-to-close sweep.
+- `Captures/Water-Editor-1920.json`, `Water-Editor-1280.json`, `Water-Editor-Cycles.json`, `Water-Editor-Details.json` — focused runtime results.
+- `Captures/Water-Windows-PASS.json`, `Water-Windows-Cycles.json` — standalone results.
+- `Logs/PlanetZoomValidation.txt`, `PlanetSavedAssets.txt`, `MainMenuValidation.txt`, `PlanetBuild.txt` — projection, reopened asset and build checks.
+
 ## Milestone 2 — planet selection, 2026-09-15
 
 Validated with Unity 6000.5.8f1, URP 17.5.0 and Input System 1.20.0. The original package manifest and lockfile are unchanged.

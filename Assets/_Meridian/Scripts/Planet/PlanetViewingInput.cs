@@ -10,11 +10,12 @@ namespace Meridian
         [SerializeField] private Camera viewingCamera;
         [SerializeField] private PlanetGlobe globe;
         [SerializeField] private PlanetSelectionController selection;
-        [SerializeField] private RectTransform bottomControls;
         [SerializeField,Range(.05f,.6f)] private float rotationSensitivity=.22f;
         [SerializeField,Range(3,15)] private float dragThreshold=7;
-        [SerializeField] private float initialFraming=.63f,minimumFraming=.45f,maximumFraming=.8f;
-        [SerializeField] private float zoomPerTick=.045f,zoomSmoothing=12;
+        [SerializeField,Tooltip("Projected full globe diameter / viewport height. Close views intentionally crop the globe.")]
+        private float initialFraming=.63f,minimumFraming=.45f,maximumFraming=2.1f;
+        [SerializeField,Tooltip("Logarithmic magnification per normalized wheel tick.")]
+        private float zoomPerTick=.10f,zoomSmoothing=12;
         private readonly GlobeGesture gesture=new GlobeGesture();
         private readonly List<RaycastResult> uiHits=new List<RaycastResult>();
         private Vector2 previous;
@@ -23,8 +24,8 @@ namespace Meridian
         public bool InteractionEnabled => interactionEnabled;
         public Camera ViewingCamera=>viewingCamera;
         public bool IsDragging=>gesture.Captured&&gesture.Dragged;
-        public void Configure(Camera camera,PlanetGlobe planet,PlanetSelectionController controller,RectTransform controls)
-        {viewingCamera=camera;globe=planet;selection=controller;bottomControls=controls;}
+        public void Configure(Camera camera,PlanetGlobe planet,PlanetSelectionController controller)
+        {viewingCamera=camera;globe=planet;selection=controller;}
         void Awake(){targetFraming=currentFraming=initialFraming;}
         public void SetInteraction(bool value){interactionEnabled=value;gesture.Reset();}
         public bool OverUI(Vector2 point)
@@ -62,29 +63,18 @@ namespace Meridian
                 float divisor=InputSystem.settings.scrollDeltaBehavior==InputSettings.ScrollDeltaBehavior.KeepPlatformSpecificInputRange &&
                     (Application.platform==RuntimePlatform.WindowsPlayer || Application.platform==RuntimePlatform.WindowsEditor)?120f:1f;
                 float ticks=mouse.scroll.ReadValue().y/divisor;
-                if(!float.IsNaN(ticks)&&!float.IsInfinity(ticks))targetFraming=Mathf.Clamp(targetFraming+Mathf.Clamp(ticks,-20,20)*zoomPerTick,minimumFraming,MaximumFraming());
+                if(!float.IsNaN(ticks)&&!float.IsInfinity(ticks))
+                    targetFraming=Mathf.Clamp(targetFraming*Mathf.Exp(Mathf.Clamp(ticks,-20,20)*zoomPerTick),minimumFraming,maximumFraming);
             }
-        }
-        float MaximumFraming()
-        {
-            float widthLimit=Screen.width/(float)Mathf.Max(1,Screen.height)*.85f;
-            float controlsLimit=.8f;
-            if(bottomControls)
-            {
-                var corners=new Vector3[4];bottomControls.GetWorldCorners(corners);
-                float top=RectTransformUtility.WorldToScreenPoint(null,corners[1]).y;
-                controlsLimit=1-2*(top+Screen.height*.035f)/Mathf.Max(1,Screen.height);
-            }
-            return Mathf.Max(.2f,Mathf.Min(maximumFraming,Mathf.Min(widthLimit,controlsLimit))/1.16f);
         }
         void ApplyFraming()
         {
             if(!viewingCamera||!globe)return;
-            float max=MaximumFraming(),min=Mathf.Min(minimumFraming,max);
+            float max=Mathf.Max(.2f,maximumFraming),min=Mathf.Clamp(minimumFraming,.2f,max);
             targetFraming=Mathf.Clamp(targetFraming,min,max);
             currentFraming=Mathf.Clamp(Mathf.Lerp(currentFraming,targetFraming,1-Mathf.Exp(-zoomSmoothing*Time.unscaledDeltaTime)),min,max);
             float distance=Vector3.Distance(viewingCamera.transform.position,globe.transform.position);
-            // Include maximum terrain relief, flag height and its raised planting pose in the envelope.
+            // Unit sphere plus maximum relief. UI/flag clearance must not limit regional zoom.
             const float envelope=1.005f;
             float tangent=envelope/Mathf.Sqrt(distance*distance-envelope*envelope);
             viewingCamera.fieldOfView=2*Mathf.Atan(tangent/currentFraming)*Mathf.Rad2Deg;

@@ -2,7 +2,7 @@
 
 Meridian is an exoplanet colony builder directed from an orbital command ship. Future gameplay will use an overhead/isometric camera in a three-dimensional colony and landscape.
 
-Milestone 2 adds a procedural planet and landing-region selector. **NEW COLONY** fades into a fresh generated globe. Left-drag rotates the planet, the wheel provides limited centered zoom, and clicking land plants or moves one animated amber flag. **BACK** returns to the menu. **CONTINUE remains disabled**, even after selection; LOAD COLONY, SETTINGS, and QUIT remain inert placeholders.
+Milestone 2 adds a procedural planet and landing-region selector. **NEW COLONY** fades into a fresh generated globe. Left-drag rotates the planet, the wheel zooms from a whole-globe overview to a cropped regional view, and clicking land plants or moves one animated amber flag. Oceans have subtle animated ripple normals and restrained reflections. **BACK** returns to the menu. **CONTINUE remains disabled**, even after selection; LOAD COLONY, SETTINGS, and QUIT remain inert placeholders.
 
 ## Open and run
 

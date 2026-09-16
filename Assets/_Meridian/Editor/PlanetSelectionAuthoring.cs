@@ -74,7 +74,7 @@ namespace Meridian.Editor
             Events(ui);
             var controller=new GameObject("Planet Selection",typeof(PlanetSelectionController),typeof(PlanetViewingInput));
             var selection=controller.GetComponent<PlanetSelectionController>();var viewing=controller.GetComponent<PlanetViewingInput>();
-            viewing.Configure(camera,globe,selection,band);
+            viewing.Configure(camera,globe,selection);
             selection.Configure(settings,globe,flag,viewing,transition,group,back,next);
             UnityEventTools.AddPersistentListener(back.onClick,selection.Back);
             EditorSceneManager.SaveScene(scene,ScenePath);
@@ -144,6 +144,9 @@ namespace Meridian.Editor
             var rect=(RectTransform)go.transform;rect.anchorMin=rect.anchorMax=new Vector2(right?1:0,0);
             rect.pivot=new Vector2(right?1:0,.5f);rect.anchoredPosition=new Vector2(right?-65:65,55);
             var label=go.GetComponentInChildren<TMP_Text>();label.text=title;
+            // Local contrast when the enlarged globe passes behind these overlay controls.
+            var face=go.GetComponent<Image>();face.color=new Color(0,0,0,.62f);
+            PrefabUtility.RecordPrefabInstancePropertyModifications(face);
             go.GetComponent<MenuButtonVisual>().Configure(label,go.GetComponentInChildren<CanvasGroup>(),false);
             PrefabUtility.RecordPrefabInstancePropertyModifications(rect);PrefabUtility.RecordPrefabInstancePropertyModifications(label);
             return go.GetComponent<Button>();

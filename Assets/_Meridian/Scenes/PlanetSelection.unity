@@ -219,6 +219,10 @@ PrefabInstance:
       propertyPath: m_text
       value: CONTINUE
       objectReference: {fileID: 0}
+    - target: {fileID: 5127385858851175783, guid: 881a0008169fe334ead561a995327692, type: 3}
+      propertyPath: m_Color.a
+      value: 0.62
+      objectReference: {fileID: 0}
     - target: {fileID: 6307401896567525032, guid: 881a0008169fe334ead561a995327692, type: 3}
       propertyPath: m_Name
       value: CONTINUE
@@ -427,6 +431,10 @@ PrefabInstance:
     - target: {fileID: 3865774480264460231, guid: 881a0008169fe334ead561a995327692, type: 3}
       propertyPath: m_text
       value: BACK
+      objectReference: {fileID: 0}
+    - target: {fileID: 5127385858851175783, guid: 881a0008169fe334ead561a995327692, type: 3}
+      propertyPath: m_Color.a
+      value: 0.62
       objectReference: {fileID: 0}
     - target: {fileID: 6307401896567525032, guid: 881a0008169fe334ead561a995327692, type: 3}
       propertyPath: m_Name
@@ -640,13 +648,12 @@ MonoBehaviour:
   viewingCamera: {fileID: 1949446508}
   globe: {fileID: 234966506}
   selection: {fileID: 1730782860}
-  bottomControls: {fileID: 1476070805}
   rotationSensitivity: 0.22
   dragThreshold: 7
   initialFraming: 0.63
   minimumFraming: 0.45
-  maximumFraming: 0.8
-  zoomPerTick: 0.045
+  maximumFraming: 2.1
+  zoomPerTick: 0.1
   zoomSmoothing: 12
 --- !u!114 &1730782860
 MonoBehaviour:
