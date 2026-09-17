@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
+using System.Threading.Tasks;
 using UnityEngine;
 
 namespace Meridian
@@ -45,22 +46,31 @@ namespace Meridian
             }
         }
 
-        public static SurfaceWorldData Generate(PlanetData planet,Vector3 selectedDirection,SurfaceParameters parameters,CancellationToken cancellation=default)
+        public static SurfaceWorldData Generate(PlanetData planet,Vector3 selectedDirection,SurfaceParameters parameters,CancellationToken cancellation=default,
+            SurfaceLoadProgress progress=null,int workerCount=0)
         {
             if(planet==null)throw new ArgumentNullException(nameof(planet));
             if(selectedDirection.sqrMagnitude<.5f)throw new ArgumentException("A selected geographic direction is required.");
             cancellation.ThrowIfCancellationRequested();var timer=Stopwatch.StartNew();
             var world=new SurfaceWorldData(planet,new SurfaceFrame(selectedDirection,parameters.mappingRadius),parameters);
             FindPlain(world,cancellation);
+            progress?.Report(.02f,"Surveying buildable ground");
+            int workers=workerCount>0?Math.Min(workerCount,4):Math.Max(1,Math.Min(4,Environment.ProcessorCount-2));
+            var parallel=new ParallelOptions {CancellationToken=cancellation,MaxDegreeOfParallelism=workers};
             // Readiness is measured before allocating terrain arrays, so impossible regions fail cheaply.
-            MeasureBuildable(world,cancellation);
+            MeasureBuildable(world,cancellation,parallel,progress);
             int count=parameters.initialTilesPerAxis,first=world.MinimumTile;
-            var tiles=new SurfaceTileData[count*count];var allObjects=new List<SurfaceObjectData>();int index=0;
-            for(int z=first;z<first+count;z++)for(int x=first;x<first+count;x++)
+            var tiles=new SurfaceTileData[count*count];var allObjects=new List<SurfaceObjectData>();int completed=0;
+            progress?.Report(.12f,$"Generating terrain: 0 / {tiles.Length} tiles");
+            // Each tile reads frozen geography and owns its output. Publish in address order, never completion order.
+            Parallel.For(0,tiles.Length,parallel,index=>
             {
-                cancellation.ThrowIfCancellationRequested();
-                var tile=GenerateTile(world,new Vector2Int(x,z),cancellation);tiles[index++]=tile;allObjects.AddRange(tile.Objects);
-            }
+                tiles[index]=GenerateTile(world,new Vector2Int(first+index%count,first+index/count),cancellation);
+                int done=Interlocked.Increment(ref completed);
+                progress?.Report(.12f+.60f*done/tiles.Length,$"Generating terrain: {done} / {tiles.Length} tiles");
+            });
+            cancellation.ThrowIfCancellationRequested();
+            foreach(var tile in tiles)allObjects.AddRange(tile.Objects);
             world.Tiles=tiles;world.Objects=allObjects.ToArray();
             world.TreeGroves=CollectTreeGroves(world,world.Objects);
             var landing=LandingPlacement.Evaluate(world,world.PlainCentre,0);
@@ -75,6 +85,7 @@ namespace Meridian
             }
             if(!landing.Valid)throw new SurfaceSurveyException("This region has no clear, level deployment footprint. Return to the planet and choose another region.");
             world.DefaultLanding=landing.Candidate;timer.Stop();world.GenerationSeconds=timer.Elapsed.TotalSeconds;
+            progress?.Report(.74f,"Preparing ground materials");
             return world;
         }
 
@@ -452,11 +463,12 @@ namespace Meridian
             return result;
         }
 
-        static void MeasureBuildable(SurfaceWorldData world,CancellationToken token)
+        static void MeasureBuildable(SurfaceWorldData world,CancellationToken token,ParallelOptions parallel,SurfaceLoadProgress progress)
         {
             float step=world.Parameters.buildableCellSize;int n=Mathf.CeilToInt(world.Bounds.width/step);
             step=world.Bounds.width/n;var usable=new bool[n*n];var labels=new int[n*n];var sizes=new List<int>();
-            for(int z=0;z<n;z++)
+            int completed=0;
+            Parallel.For(0,n,parallel,z=>
             {
                 token.ThrowIfCancellationRequested();
                 for(int x=0;x<n;x++)
@@ -465,14 +477,18 @@ namespace Meridian
                     // Several metres of shore clearance keep sub-cell channels out of the measured construction area.
                     usable[z*n+x]=sample.IsLand && sample.WaterDistance>step*.75f && world.Slope(wx,wz)<=world.Parameters.buildableSlope;
                 }
-            }
+                int done=Interlocked.Increment(ref completed);
+                if(done%10==0)progress?.Report(.02f+.09f*done/n,"Surveying buildable ground");
+            });
             var queue=new Queue<int>();int component=0;
             for(int start=0;start<usable.Length;start++)
             {
+                if((start&4095)==0)token.ThrowIfCancellationRequested();
                 if(!usable[start] || labels[start]!=0)continue;
                 component++;int size=0;labels[start]=component;queue.Enqueue(start);
                 while(queue.Count>0)
                 {
+                    if((size&4095)==0)token.ThrowIfCancellationRequested();
                     int at=queue.Dequeue();size++;int x=at%n,z=at/n;
                     void Add(int next){if(usable[next] && labels[next]==0){labels[next]=component;queue.Enqueue(next);}}
                     if(x>0)Add(at-1);if(x<n-1)Add(at+1);if(z>0)Add(at-n);if(z<n-1)Add(at+n);

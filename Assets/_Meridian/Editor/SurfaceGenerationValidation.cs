@@ -47,7 +47,9 @@ namespace Meridian.Editor
                 best=score;direction=at;
             }
             Require(direction.sqrMagnitude>.9f,"Fixed seed has no representative inland forest region.");
-            var world=SurfaceGenerator.Generate(planet,direction,settings);
+            var progress=new SurfaceLoadProgress();
+            var world=SurfaceGenerator.Generate(planet,direction,settings,progress:progress);
+            Require(progress.Current.Fraction>=.74f,"Numeric generation did not report completion to the loading screen.");
             int tileCount=settings.initialTilesPerAxis*settings.initialTilesPerAxis;
             Require(world.Tiles.Length==tileCount && world.Tiles.All(t=>t.Heights.GetLength(0)==settings.heightmapResolution),"Wrong initial terrain budget.");
             Require(world.Bounds.width==6000 && world.Bounds.height==6000,"Survey does not cover the requested 6x6 km region.");

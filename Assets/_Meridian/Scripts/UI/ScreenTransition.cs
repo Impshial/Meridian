@@ -20,6 +20,9 @@ namespace Meridian
         private Button recovery;
         private string recoveryScene;
         private bool recovering,failed;
+        private ISetupDestination loadingDestination;
+        private float loadingStarted,nextProgressUpdate;
+        private int loggedProgress=-1;
         public static ScreenTransition Active {get;private set;}
         public string Message=>message?message.text:string.Empty;
         public void Configure(CanvasGroup group,TMP_FontAsset typography=null){overlay=group;font=typography;}
@@ -46,7 +49,7 @@ namespace Meridian
         {
             Destination()?.SetInteraction(false);ClickPulse.Clear();
             // Give the independently visible message a rendered frame before scene/resource work.
-            Canvas.ForceUpdateCanvases();yield return new WaitForEndOfFrame();yield return null;
+            Canvas.ForceUpdateCanvases();yield return null;
             yield return Fade(overlay.alpha,1);
             AsyncOperation operation=null;System.Exception failure=null;
             try{operation=SceneManager.LoadSceneAsync(destination,LoadSceneMode.Single);}
@@ -60,15 +63,16 @@ namespace Meridian
         IEnumerator FinishEntry()
         {
             yield return null;
-            var destination=Destination();float deadline=Time.realtimeSinceStartup+180;
-            while(destination!=null && !destination.IsReady && !destination.GenerationFailed && Time.realtimeSinceStartup<deadline)yield return null;
-            if(destination!=null && (!destination.IsReady || destination.GenerationFailed))
+            var destination=loadingDestination=Destination();
+            while(destination!=null && !destination.IsReady && !destination.GenerationFailed)yield return null;
+            if(destination!=null && destination.GenerationFailed)
             {
                 destination.SetInteraction(false);
-                string reason=destination.GenerationFailed?destination.FailureMessage:"Generation took too long. Please return and try another region.";
+                string reason=destination.FailureMessage;
                 ShowFailure(string.IsNullOrWhiteSpace(reason)?"This region could not be prepared. Please choose another location.":reason);
                 yield break;
             }
+            recovery.gameObject.SetActive(false);details.gameObject.SetActive(false);
             yield return Fade(1,0);
             while(HeldInput())yield return null;
             // Keep the destination input gated until the overlay has actually retired.
@@ -80,6 +84,7 @@ namespace Meridian
             (Keyboard.current?.enterKey.isPressed??false)||(Keyboard.current?.spaceKey.isPressed??false)||(Gamepad.current?.buttonSouth.isPressed??false);
         void ShowFailure(string reason)
         {
+            (loadingDestination as ISetupLoading)?.CancelLoading();
             failed=true;recovering=false;recovery.interactable=true;overlay.alpha=1;presentation.alpha=1;
             bool hasPlanet=SceneManager.GetActiveScene().name!="PlanetSelection" && SetupSession.Current && SetupSession.Current.Planet!=null;
             recoveryScene=hasPlanet?"PlanetSelection":"MainMenu";
@@ -91,14 +96,45 @@ namespace Meridian
         }
         public void Recover()
         {
-            if(recovering || !failed)return;
+            bool canCancel=loadingDestination is ISetupLoading && !loadingDestination.IsReady;
+            if(recovering || (!failed && !canCancel))return;
+            (loadingDestination as ISetupLoading)?.CancelLoading();StopAllCoroutines();
             recovering=true;failed=false;recovery.interactable=false;
             recovery.gameObject.SetActive(false);details.gameObject.SetActive(false);
             indicator.gameObject.SetActive(true);SetMessage(recoveryScene=="PlanetSelection"?"Returning to Exo-planet...":"Returning to menu...");
             StartCoroutine(ChangeScene(recoveryScene));
         }
-        void SetMessage(string text){message.text=text;presentation.alpha=string.IsNullOrEmpty(text)?0:1;}
-        void Update(){if(!failed && indicator)indicator.localRotation=Quaternion.Euler(0,0,-Time.unscaledTime*100);}
+        void SetMessage(string text)
+        {
+            message.text=text;presentation.alpha=string.IsNullOrEmpty(text)?0:1;
+            loadingStarted=Time.realtimeSinceStartup;loadingDestination=null;loggedProgress=-1;
+        }
+        void Update()
+        {
+            if(failed)return;
+            if(indicator)indicator.localRotation=Quaternion.Euler(0,0,-Time.unscaledTime*100);
+            float now=Time.realtimeSinceStartup;
+            // Watch the entire transition, including scene activation and input release, independently
+            // of the coroutine that may be waiting. A live spinner must never conceal an unbounded wait.
+            if(now-loadingStarted>180)
+            {
+                StopAllCoroutines();loadingDestination=Destination();
+                Debug.LogError($"Meridian loading timed out in {SceneManager.GetActiveScene().name}: {details.text}");
+                ShowFailure("Loading took too long. Return to the planet or menu and try again.");return;
+            }
+            if(now<nextProgressUpdate)return;nextProgressUpdate=now+.2f;
+            if(loadingDestination is Object old && !old)loadingDestination=null;
+            if(loadingDestination==null)loadingDestination=Destination();
+            if(!recovering && loadingDestination is ISetupLoading loading && !loadingDestination.IsReady && !loadingDestination.GenerationFailed)
+            {
+                var state=loading.LoadingProgress;
+                int percent=Mathf.FloorToInt(state.Fraction*100);
+                details.text=$"{state.Detail}  ({percent}%)";details.gameObject.SetActive(true);
+                if(percent/10>loggedProgress){loggedProgress=percent/10;Debug.Log($"Meridian loading: {details.text}; {now-loadingStarted:F1}s elapsed.");}
+                recoveryScene="PlanetSelection";recovery.GetComponentInChildren<TMP_Text>().text="BACK TO PLANET";
+                recovery.interactable=true;recovery.gameObject.SetActive(true);
+            }
+        }
         IEnumerator Fade(float from,float to)
         {
             overlay.alpha=from;float elapsed=0;
@@ -122,7 +158,7 @@ namespace Meridian
             presentation=root.gameObject.AddComponent<CanvasGroup>();
             message=Label("Loading Message",root,new Vector2(0,24),28,new Vector2(1300,80));
             details=Label("Recovery Detail",root,new Vector2(0,-65),20,new Vector2(1050,110));details.textWrappingMode=TextWrappingModes.Normal;details.gameObject.SetActive(false);
-            indicator=Rect("Activity Indicator",root);indicator.sizeDelta=new Vector2(20,20);indicator.anchoredPosition=new Vector2(0,-40);
+            indicator=Rect("Activity Indicator",root);indicator.sizeDelta=new Vector2(20,20);indicator.anchoredPosition=new Vector2(0,-130);
             var graphic=indicator.gameObject.AddComponent<Image>();graphic.color=new Color32(255,183,88,255);graphic.raycastTarget=false;
             var cutout=Rect("Indicator Centre",indicator);cutout.sizeDelta=new Vector2(14,14);var cut=cutout.gameObject.AddComponent<Image>();cut.color=Color.black;cut.raycastTarget=false;
             var buttonRect=Rect("Recovery",root);buttonRect.sizeDelta=new Vector2(380,70);buttonRect.anchoredPosition=new Vector2(0,-180);

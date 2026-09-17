@@ -9,7 +9,7 @@ namespace Meridian
     {
         const int Size=1024;
         const float RepeatMetres=8;
-        public static IEnumerator Create(Action<UnityEngine.Object> own,Action<TerrainLayer[]> finished)
+        public static IEnumerator Create(Action<UnityEngine.Object> own,Action<TerrainLayer[]> finished,Action<int,int> progress=null)
         {
             string[] names={"Grass and forest soil","Dry sand","Exposed stone","Snow","Damp earth"};
             var layers=new TerrainLayer[names.Length];
@@ -79,7 +79,7 @@ namespace Meridian
                 var normalMap=Texture(" normals",normals,true);var surface=Texture(" surface",mask,true);
                 var terrainLayer=new TerrainLayer{name=names[layer],diffuseTexture=albedo,normalMapTexture=normalMap,maskMapTexture=surface,
                     tileSize=new Vector2(RepeatMetres,RepeatMetres),normalScale=.75f,metallic=0,smoothness=.08f};
-                own(terrainLayer);layers[layer]=terrainLayer;yield return null;
+                own(terrainLayer);layers[layer]=terrainLayer;progress?.Invoke(layer+1,layers.Length);yield return null;
             }
             finished(layers);
         }

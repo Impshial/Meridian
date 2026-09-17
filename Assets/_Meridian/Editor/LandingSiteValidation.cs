@@ -30,7 +30,8 @@ namespace Meridian.Editor
             var settings=(SurfaceGenerationSettings)root.FindProperty("settings").objectReferenceValue;
             var parameters=settings.Snapshot();Require(parameters.heightmapResolution==513 && parameters.tileSize==1000 && parameters.initialTilesPerAxis==6,"Default 6x6 km survey tile budget changed");
             var font=AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/_Meridian/Art/Fonts/MeridianMenu_SDF.asset");
-            Require((ScreenTransition.PlanetLoadingMessage+"Loading Landing Site...Landing site confirmed").All(c=>font.HasCharacter(c)),"Loading/confirmation typography missing glyphs");
+            Require((ScreenTransition.PlanetLoadingMessage+"Loading Landing Site...Landing site confirmed"+
+                "Preparing regional geography Surveying buildable ground Generating terrain Preparing ground materials Preparing landscape Placing forests and resources Preparing forest rendering Finishing the survey view Survey ready 0123456789 / ()%").All(c=>font.HasCharacter(c)),"Loading/confirmation typography missing glyphs");
             Require(((Material)root.FindProperty("terrainMaterial").objectReferenceValue).shader.isSupported,"Terrain shader unsupported");
             Directory.CreateDirectory("Logs");
             File.WriteAllText("Logs/LandingSavedAssets.txt","PASS: 3 saved scenes, selected-region CONTINUE, landing screen/prefab references, 36x1km/513 defaults, loading/confirmation glyphs, shader.\n");

@@ -26,6 +26,8 @@ The initial surface is **6 km × 6 km (36 km²)**, made from 36 connected 1 km U
 
 Surface controls: WASD/arrows or middle-drag pan along screen-left/right and screen-up/down, wheel tilts the overhead view, **Shift + wheel zooms**, Q/E smoothly interpolates to accumulated 45° targets, +/− also zooms, and Home resets. Left-click locks a valid site, R/Shift+R changes the ship heading, and right-click/Esc clears. Pan limits are consistent across all allowed tilts and headings at a given zoom; tilting at an edge keeps the same ground focus. The expanded survey supports approximately 1,218 m maximum distance at 16:9 and starts at up to 730 m. Panning stops in the requested direction at a boundary instead of sliding diagonally along the edge. Start a new colony to generate the larger region. Confirmation retains the marker and survey controls; dropship arrival and colony simulation come later. Settings: `Assets/_Meridian/Settings/SurfaceGeneration.asset`. Authoring: `Meridian > Author Landing Site Selection`.
 
+Landing preparation uses up to four numerical workers and displays stage/percentage progress. **BACK TO PLANET** cancels loading; an independent three-minute timeout offers recovery if preparation stalls. One production Windows-player comparison improved from 117 seconds to 43 seconds for the same site, retaining all 36 tiles and their terrain detail.
+
 See [landing coordinates, controls and prototype limits](Documentation/LandingSiteSelection.md), [planet representation](Documentation/PlanetSelection.md), and [validation](Documentation/Validation.md). Save/load, expansion gameplay, harvesting, construction and survival systems are not implemented.
 
 ## Repository

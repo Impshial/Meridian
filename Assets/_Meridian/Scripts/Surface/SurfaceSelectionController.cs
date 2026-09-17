@@ -10,7 +10,7 @@ using UnityEngine.Rendering.Universal;
 
 namespace Meridian
 {
-    public sealed class SurfaceSelectionController : MonoBehaviour,ISetupDestination
+    public sealed class SurfaceSelectionController : MonoBehaviour,ISetupDestination,ISetupLoading
     {
         [SerializeField] private SurfaceGenerationSettings settings;
         [SerializeField] private ScreenTransition transitionPrefab;
@@ -28,6 +28,8 @@ namespace Meridian
         private float heading,nextEvaluation;
         private PlacementResult placement;
         private bool interaction,locked,hasPosition,confirmed;
+        private readonly SurfaceLoadProgress loadingProgress=new SurfaceLoadProgress();
+        public SurfaceLoadProgress.Snapshot LoadingProgress=>loadingProgress.Current;
         public bool IsReady {get;private set;}
         public bool GenerationFailed {get;private set;}
         public string FailureMessage {get;private set;}
@@ -56,7 +58,8 @@ namespace Meridian
             {
                 PlanetData planet=session.Planet;Vector3 direction=session.Selection.localDirection;
                 SurfaceParameters parameters=settings.Snapshot();
-                var task=Task.Run(()=>SurfaceGenerator.Generate(planet,direction,parameters,token),token);
+                Debug.Log($"Meridian survey started: seed {planet.Seed}, direction {direction.ToString("F6")}, {parameters.initialTilesPerAxis}x{parameters.initialTilesPerAxis} tiles.");
+                var task=Task.Run(()=>SurfaceGenerator.Generate(planet,direction,parameters,token,loadingProgress),token);
                 _=task.ContinueWith(t=>{var observed=t.Exception;},TaskContinuationOptions.OnlyOnFaulted);
                 while(!task.IsCompleted)yield return null;
                 if(token.IsCancellationRequested || !session || revision!=session.RegionRevision)yield break;
@@ -67,10 +70,11 @@ namespace Meridian
                     Fail(error is SurfaceSurveyException?error.Message:"The landing survey could not finish. Return to the planet and select another region.",error);yield break;
                 }
                 World=task.Result;session.SetSurface(World);
+                Debug.Log($"Meridian survey numerical data ready: {World.GenerationSeconds:F2}s.");
             }
             landscape=new GameObject("Generated Surface Landscape").AddComponent<SurfaceLandscape>();landscape.transform.SetParent(transform,false);
             // Catch nested coroutine errors as well as generation errors: never leave an overlay waiting forever.
-            var stack=new Stack<IEnumerator>();stack.Push(landscape.Build(World,terrainMaterial,waterMaterial));
+            var stack=new Stack<IEnumerator>();stack.Push(landscape.Build(World,terrainMaterial,waterMaterial,loadingProgress));
             while(stack.Count>0)
             {
                 bool moved=false;object current=null;Exception failure=null;
@@ -88,14 +92,16 @@ namespace Meridian
             }
             catch(Exception error){Fail("The survey controls could not be prepared. Return to the planet and try again.",error);}
             if(GenerationFailed)yield break;
+            loadingProgress.Report(.99f,"Finishing the survey view");
             // Render the new camera under the cover before declaring readiness. Fresh terrain shader
             // variants compile asynchronously in the Editor; exposing them early can reveal empty ground.
-            yield return new WaitForEndOfFrame();yield return null;
+            yield return null;yield return null;
 #if UNITY_EDITOR
             while(UnityEditor.ShaderUtil.anythingCompiling)yield return null;
 #endif
             if(token.IsCancellationRequested || !session || revision!=session.RegionRevision)yield break;
             IsReady=true;UpdatePresentation();
+            loadingProgress.Report(1,"Survey ready");
             Debug.Log($"Meridian landing survey ready: seed {World.Seed}, {World.Version}, {World.Tiles.Length} tiles, {World.Parameters.heightmapResolution} heights/tile, {World.BuildableArea:F0} m² connected buildable area, {World.GenerationSeconds:F2}s numeric generation.");
         }
         void PrepareView()
@@ -121,6 +127,10 @@ namespace Meridian
             interaction=enabled;gesture.Reset();if(surveyCamera)surveyCamera.SetInteraction(enabled);
             if(presentation)presentation.SetInteraction(enabled,locked&&placement.Valid&&!confirmed);
             if(!enabled)ClickPulse.Clear();
+        }
+        public void CancelLoading()
+        {
+            cancellation?.Cancel();StopAllCoroutines();SetInteraction(false);
         }
         public void BackToPlanet()
         {

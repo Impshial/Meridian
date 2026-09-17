@@ -1,5 +1,17 @@
 # Validation
 
+## Landing loading responsiveness and recovery — 2026-09-16
+
+The reported Windows-player log contained seed **995779256** and no surface exception before shutdown, but did not record the chosen landing direction. A representative inland site on that seed, using the production **4096 × 2048** planet maps and **36 production-resolution terrain tiles**, completed in the old build in **116.99 s** (**102.80 s** numeric generation). This reproduced a long unexplained wait, not the user's exact indefinite stall.
+
+Generation now uses at most four workers for independent readiness rows and terrain tiles, with deterministic address-order publication. The same Windows-player site at direction **(0.631866, 0.713513, −0.302729)** completed in **42.64 s**, including **28.99 s** numeric generation. Both runs measured **16,625,600 m²** of connected buildable ground. A serial regeneration matched all heights and objects of a parallel-generated tile, and every active tile border agreed. Geography, resolution and the 6 × 6 km area remain unchanged; surface version 6 is retained.
+
+The screen displays stage/percentage progress and permits BACK TO PLANET during preparation. Progress snapshots are immutable and safe to read from the main thread. An independent Update watchdog covers the full transition rather than only the destination-readiness coroutine. It stops loading work and presents recovery after 180 seconds. Transition/readiness no longer depends on `WaitForEndOfFrame`. Stage timings and selected geographic direction are logged for future diagnosis.
+
+Focused Windows-player checks passed normal completion, cancellation during material preparation, return to the same cached planet with no remaining terrains, and a simulated expired deadline with the transition coroutine deliberately stopped. The latter still displayed recovery, cancelled preparation and returned to the planet. The expected timeout error appears in the diagnostic log. Evidence: `Logs/LoadingBaselinePlayer.log` and `Logs/LoadingFixedPlayer.log`. No broad seed or interaction suite was rerun. Timing is a single-site comparison, not a guarantee for all computers or regions.
+
+The final normal Windows x64 build contains no diagnostic runner and succeeds with **zero errors and warnings**, **102,867,057 bytes**, in **25.23 s** (`Logs/LoadingFinalBuild.txt`). Saved assets and loading-text glyph checks pass. Temporary diagnostic sources were removed.
+
 ## Smooth rotation and 6 km × 6 km survey — 2026-09-16
 
 Surface generator `meridian-surface-6` expands the centered region to **6,000 × 6,000 m (36 km²)**, four times version 5's area. It uses 36 one-kilometre tiles at the existing 513 height / 128 layer resolution, with unchanged gentle landforms and randomized forests. Height/layer numerical arrays occupy approximately **36.14 / 11.25 MiB**; shared ground textures remain **80 MiB**. Start a new colony to use these dimensions.

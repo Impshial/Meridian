@@ -4,6 +4,28 @@ using UnityEngine;
 
 namespace Meridian
 {
+    /// <summary>Immutable progress snapshots passed from numeric workers to the loading UI.</summary>
+    public sealed class SurfaceLoadProgress
+    {
+        public sealed class Snapshot
+        {
+            public readonly float Fraction;
+            public readonly string Detail;
+            internal Snapshot(float fraction,string detail){Fraction=fraction;Detail=detail;}
+        }
+        private readonly object gate=new object();
+        private Snapshot current=new Snapshot(0,"Preparing regional geography");
+        public Snapshot Current=>Volatile.Read(ref current);
+        public void Report(float fraction,string detail)
+        {
+            lock(gate)
+            {
+                if(fraction<current.Fraction)return;
+                Volatile.Write(ref current,new Snapshot(Mathf.Clamp01(fraction),detail));
+            }
+        }
+    }
+
     /// <summary>Frozen gnomonic tangent frame: +X east, +Z north, +Y local height. The pole fallback is saved, never recomputed per tile.</summary>
     [Serializable]
     public struct SurfaceFrame

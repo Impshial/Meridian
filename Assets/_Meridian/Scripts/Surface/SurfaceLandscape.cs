@@ -14,10 +14,13 @@ namespace Meridian
         private readonly List<TerrainCollider> colliders=new List<TerrainCollider>();
         private readonly Dictionary<int,Material> propMaterials=new Dictionary<int,Material>();
         public IReadOnlyList<TerrainCollider> Colliders=>colliders;
-        public IEnumerator Build(SurfaceWorldData world,Material terrainMaterial,Material waterMaterial)
+        public IEnumerator Build(SurfaceWorldData world,Material terrainMaterial,Material waterMaterial,SurfaceLoadProgress progress=null)
         {
             TerrainLayer[] layers=null;
-            yield return SurfaceGroundTextures.Create(resource=>owned.Add(resource),created=>layers=created);
+            progress?.Report(.74f,"Preparing ground materials");
+            yield return SurfaceGroundTextures.Create(resource=>owned.Add(resource),created=>layers=created,
+                (done,total)=>progress?.Report(.74f+.08f*done/total,$"Preparing ground materials: {done} / {total}"));
+            int uploaded=0;
             foreach(var tile in world.Tiles)
             {
                 var data=Own(new TerrainData{name=$"Survey Terrain {tile.Address.x},{tile.Address.y}",heightmapResolution=tile.Heights.GetLength(0),
@@ -38,6 +41,7 @@ namespace Meridian
                     water.GetComponent<MeshFilter>().sharedMesh=mesh;var renderer=water.GetComponent<MeshRenderer>();renderer.sharedMaterial=waterMaterial;
                     renderer.shadowCastingMode=ShadowCastingMode.Off;renderer.receiveShadows=true;
                 }
+                uploaded++;progress?.Report(.82f+.10f*uploaded/world.Tiles.Length,$"Preparing landscape: {uploaded} / {world.Tiles.Length} tiles");
                 yield return null;
             }
             foreach(var pair in terrains)
@@ -45,7 +49,8 @@ namespace Meridian
                 Terrain At(int x,int z)=>terrains.TryGetValue(pair.Key+new Vector2Int(x,z),out var t)?t:null;
                 pair.Value.SetNeighbors(At(-1,0),At(0,1),At(1,0),At(0,-1));
             }
-            yield return BuildProps(world,waterMaterial);
+            progress?.Report(.92f,"Placing forests and resources");
+            yield return BuildProps(world,waterMaterial,progress);
             Physics.SyncTransforms();
         }
         public bool Pick(Ray ray,out RaycastHit hit)
@@ -55,7 +60,7 @@ namespace Meridian
             {found=true;distance=candidate.distance;hit=candidate;}
             return found;
         }
-        IEnumerator BuildProps(SurfaceWorldData world,Material template)
+        IEnumerator BuildProps(SurfaceWorldData world,Material template,SurfaceLoadProgress progress)
         {
             Color[] colors={new Color(.16f,.26f,.12f),new Color(.30f,.28f,.23f),new Color(.35f,.31f,.28f),new Color(.48f,.29f,.15f),new Color(.60f,.79f,.82f),new Color(.24f,.17f,.10f)};
             for(int i=0;i<colors.Length;i++)
@@ -82,8 +87,9 @@ namespace Meridian
                     trunk.Cone(item.Position,radius*.14f,height*.6f,rotation,5);
                 }
                 else geometry.Rock(item.Position,Mathf.Max(.7f,item.Radius),rotation,item.Kind==SurfaceObjectKind.Ice);
-                if(++processed%350==0)yield return null;
+                if(++processed%350==0){progress?.Report(.92f+.03f*processed/Mathf.Max(1,world.Objects.Length),"Placing forests and resources");yield return null;}
             }
+            int uploaded=0;
             foreach(var batch in batches)
             {
                 var mesh=Own(new Mesh{name=$"Survey props {batch.Key}",indexFormat=IndexFormat.UInt32});
@@ -91,6 +97,7 @@ namespace Meridian
                 var go=new GameObject(mesh.name,typeof(MeshFilter),typeof(MeshRenderer));go.transform.SetParent(transform,false);
                 go.GetComponent<MeshFilter>().sharedMesh=mesh;var renderer=go.GetComponent<MeshRenderer>();renderer.sharedMaterial=propMaterials[batch.Key.z];
                 renderer.shadowCastingMode=ShadowCastingMode.On;
+                uploaded++;progress?.Report(.95f+.03f*uploaded/Mathf.Max(1,batches.Count),"Preparing forest rendering");
                 if(++processed%8==0)yield return null;
             }
         }

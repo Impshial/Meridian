@@ -8,4 +8,10 @@ namespace Meridian
         string FailureMessage { get; }
         void SetInteraction(bool enabled);
     }
+
+    public interface ISetupLoading
+    {
+        SurfaceLoadProgress.Snapshot LoadingProgress { get; }
+        void CancelLoading();
+    }
 }
