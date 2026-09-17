@@ -4,25 +4,25 @@ using UnityEngine.InputSystem;
 
 namespace Meridian
 {
-    /// <summary>Pregame ground survey: grab to pan, wheel to tilt, Shift + wheel to zoom, and discrete heading changes.</summary>
+    /// <summary>Screen-relative ground survey with smooth tilt, zoom and 45-degree heading targets.</summary>
     public sealed class SurveyCamera : MonoBehaviour
     {
         [SerializeField] private float minimumDistance=95,maximumDistance=1250,initialDistance=730;
         [SerializeField] private float minimumPitch=42,maximumPitch=78,panRate=.65f;
         [SerializeField] private float tiltPerTick=3,tiltSmoothing=12;
         [SerializeField] private float zoomPerTick=.12f;
+        [SerializeField] private float rotationSmoothing=12;
         private Camera lens;
         private Rect bounds;
         private Func<float,float,float> height;
         private Func<Vector2,bool> overUI;
         private Vector3 pivot,initialPivot;
-        private float distance,targetDistance,yaw=-25,pitch=57,targetPitch=57;
+        private float distance,targetDistance,yaw=-25,targetYaw=-25,pitch=57,targetPitch=57;
         private bool enabledInput,middleCapture,focused=true;
-        private Plane grabPlane;
-        private Vector3 grabbedPoint;
+        private Vector2 previousPointer;
         public Camera Lens=>lens;
         public Vector3 Pivot=>pivot;
-        public float Heading=>yaw;
+        public float Heading=>Mathf.Repeat(yaw,360);
         public float Pitch=>pitch;
         public float Distance=>distance;
         public bool IsPanning=>middleCapture;
@@ -37,7 +37,7 @@ namespace Meridian
             ResetView();ApplyPose();
         }
         public void SetInteraction(bool value)
-        {enabledInput=value;middleCapture=false;if(!value){targetDistance=distance;targetPitch=pitch;}}
+        {enabledInput=value;middleCapture=false;if(!value){targetDistance=distance;targetPitch=pitch;targetYaw=yaw;}}
         public void ResetView()
         {
             pivot=initialPivot;
@@ -45,7 +45,7 @@ namespace Meridian
             float clearance=Mathf.Min(pivot.x-bounds.xMin,bounds.xMax-pivot.x,pivot.z-bounds.yMin,bounds.yMax-pivot.z)-70;
             float focusDistance=Mathf.Max(Mathf.Min(minimumDistance,supported),clearance/GroundRadius());
             distance=targetDistance=Mathf.Min(initialDistance,supported,focusDistance);
-            yaw=-25;pitch=targetPitch=Mathf.Clamp(57,minimumPitch,maximumPitch);middleCapture=false;
+            yaw=targetYaw=-25;pitch=targetPitch=Mathf.Clamp(57,minimumPitch,maximumPitch);middleCapture=false;
         }
         void LateUpdate()
         {
@@ -57,15 +57,16 @@ namespace Meridian
                 if(mouse!=null)
                 {
                     Vector2 point=mouse.position.ReadValue();
-                    if(mouse.middleButton.wasPressedThisFrame)middleCapture=!ui && BeginGrab(point);
+                    if(mouse.middleButton.wasPressedThisFrame){middleCapture=!ui;previousPointer=point;}
                     if(middleCapture && mouse.middleButton.isPressed)
                     {
-                        Ray ray=lens.ScreenPointToRay(point);
-                        if(grabPlane.Raycast(ray,out float travel))
-                        {
-                            Vector3 movement=grabbedPoint-ray.GetPoint(travel);movement.y=0;pivot+=movement;
-                        }
+                        Vector2 delta=point-previousPointer;
+                        // A fixed screen scale avoids the sideways perspective drift of off-centre plane grabs.
+                        float metresPerPixel=2*distance*Mathf.Tan(lens.fieldOfView*.5f*Mathf.Deg2Rad)/Mathf.Max(1,lens.pixelHeight);
+                        float verticalScale=1/Mathf.Max(.1f,-lens.transform.forward.y);
+                        Pan(ScreenMotion(new Vector2(-delta.x,-delta.y*verticalScale))*metresPerPixel);
                     }
+                    previousPointer=point;
                     if(!mouse.middleButton.isPressed)middleCapture=false;
                     if(!ui)
                     {
@@ -88,36 +89,48 @@ namespace Meridian
                 {
                     if(keyboard.homeKey.wasPressedThisFrame)ResetView();
                     int turn=(keyboard.eKey.wasPressedThisFrame?1:0)-(keyboard.qKey.wasPressedThisFrame?1:0);
-                    yaw=Mathf.Repeat(yaw+turn*45,360);
+                    targetYaw+=turn*45;
                     float zoom=(keyboard.equalsKey.isPressed||keyboard.numpadPlusKey.isPressed?1:0)-
                         (keyboard.minusKey.isPressed||keyboard.numpadMinusKey.isPressed?1:0);
                     targetDistance=Mathf.Clamp(targetDistance*Mathf.Exp(-zoom*.9f*Time.unscaledDeltaTime),
                         Mathf.Min(minimumDistance,SupportedDistance()),SupportedDistance());
                     float x=(keyboard.dKey.isPressed||keyboard.rightArrowKey.isPressed?1:0)-(keyboard.aKey.isPressed||keyboard.leftArrowKey.isPressed?1:0);
                     float z=(keyboard.wKey.isPressed||keyboard.upArrowKey.isPressed?1:0)-(keyboard.sKey.isPressed||keyboard.downArrowKey.isPressed?1:0);
-                    Vector3 motion=Quaternion.Euler(0,yaw,0)*Vector3.ClampMagnitude(new Vector3(x,0,z),1);
-                    pivot+=motion*(distance*panRate*Mathf.Min(.05f,Time.unscaledDeltaTime));
+                    Vector3 motion=ScreenMotion(Vector2.ClampMagnitude(new Vector2(x,z),1));
+                    Pan(motion*(distance*panRate*Mathf.Min(.05f,Time.unscaledDeltaTime)));
                 }
             }
             distance=Mathf.Lerp(distance,targetDistance,1-Mathf.Exp(-10*Time.unscaledDeltaTime));
             pitch=Mathf.Lerp(pitch,targetPitch,1-Mathf.Exp(-tiltSmoothing*Time.unscaledDeltaTime));
-            Vector3 requestedPivot=pivot;
+            SmoothHeading(Time.unscaledDeltaTime);
             ApplyPose();
-            // At a survey boundary, discard unreachable drag travel so reversing direction responds immediately.
-            if(middleCapture && mouse!=null && (new Vector2(pivot.x-requestedPivot.x,pivot.z-requestedPivot.z)).sqrMagnitude>.0001f)
+        }
+        void SmoothHeading(float deltaTime)
+        {
+            // Keep an unwrapped target: rapid presses retain their direction even past half/full turns.
+            yaw=Mathf.Lerp(yaw,targetYaw,1-Mathf.Exp(-rotationSmoothing*deltaTime));
+            if(Mathf.Abs(yaw-targetYaw)<.01f)
             {
-                Ray ray=lens.ScreenPointToRay(mouse.position.ReadValue());
-                if(grabPlane.Raycast(ray,out float travel))grabbedPoint=ray.GetPoint(travel);
+                yaw=targetYaw;
+                float turns=Mathf.Floor(targetYaw/360)*360;yaw-=turns;targetYaw-=turns;
             }
         }
-        bool BeginGrab(Vector2 screenPoint)
+        Vector3 ScreenMotion(Vector2 movement)
         {
-            Ray ray=lens.ScreenPointToRay(screenPoint);float planeHeight=pivot.y-2;
-            if(Physics.Raycast(ray,out RaycastHit hit,lens.farClipPlane,Physics.DefaultRaycastLayers,QueryTriggerInteraction.Ignore) && hit.collider is TerrainCollider)
-                planeHeight=hit.point.y;
-            grabPlane=new Plane(Vector3.up,new Vector3(0,planeHeight,0));
-            if(!grabPlane.Raycast(ray,out float travel))return false;
-            grabbedPoint=ray.GetPoint(travel);return true;
+            Vector3 right=Vector3.ProjectOnPlane(lens.transform.right,Vector3.up).normalized;
+            Vector3 up=Vector3.ProjectOnPlane(lens.transform.forward,Vector3.up).normalized;
+            return right*movement.x+up*movement.y;
+        }
+        void Pan(Vector3 movement)
+        {
+            float inset=70+GroundRadius()*distance;
+            float fraction=1;
+            if(movement.x>0)fraction=Mathf.Min(fraction,(bounds.xMax-inset-pivot.x)/movement.x);
+            else if(movement.x<0)fraction=Mathf.Min(fraction,(bounds.xMin+inset-pivot.x)/movement.x);
+            if(movement.z>0)fraction=Mathf.Min(fraction,(bounds.yMax-inset-pivot.z)/movement.z);
+            else if(movement.z<0)fraction=Mathf.Min(fraction,(bounds.yMin+inset-pivot.z)/movement.z);
+            // Clip the entire requested segment. Independent X/Z clamps slide along oblique map edges.
+            pivot+=movement*Mathf.Clamp01(fraction);
         }
         float SupportedDistance()
         {

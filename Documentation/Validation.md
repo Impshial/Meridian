@@ -1,5 +1,17 @@
 # Validation
 
+## Smooth rotation and 6 km × 6 km survey — 2026-09-16
+
+Surface generator `meridian-surface-6` expands the centered region to **6,000 × 6,000 m (36 km²)**, four times version 5's area. It uses 36 one-kilometre tiles at the existing 513 height / 128 layer resolution, with unchanged gentle landforms and randomized forests. Height/layer numerical arrays occupy approximately **36.14 / 11.25 MiB**; shared ground textures remain **80 MiB**. Start a new colony to use these dimensions.
+
+Q/E now interpolates toward accumulated 45° targets using unscaled time, retaining turn direction across 360°. WASD and middle-drag use the rendered camera's screen axes. Mouse dragging uses pixel displacement and fixed projection scale rather than an off-center ray-plane grab. Boundary handling clips the complete requested movement, so a horizontal or vertical pan stops rather than sliding diagonally along a world-aligned edge. At 16:9, the initial 730 m distance allows approximately **2.87 km** of focus travel per world axis, with a **1,217.56 m** supported maximum distance.
+
+The fast camera check passes 2,016 boundary poses across three aspect ratios, three distances, all eight headings and the full tilt range. Additional assertions cover screen-aligned movement at 15 headings, stopping/reversing at oblique edges and interpolated accumulated turns. Saved scenes, references and 36-tile defaults pass. Evidence: `Logs/SurveyCameraBounds.txt` and `Logs/LandingSavedAssets.txt`.
+
+One focused 1920 × 1080 Play Mode run with seed 73129 and validation-only 1024 × 512 planet maps confirms **36 runtime terrains**, 36 km² bounds, **93,503 objects** and **331 groves**. Production-resolution numeric surface generation took **85.83 s**; the screen became ready in **112.39 s**, including textures, terrain, props and transition. Actual Input System events pass E/Q easing and final headings, all four WASD directions, and off-center horizontal/vertical middle drags. Captures `Captures/Survey-6km-Player.png` and `Captures/Survey-6km-Wide.png` were inspected. Evidence: `Logs/SurveyRevisionPreview.txt`. The larger area increases loading time and resources; these are single Editor measurements. The broad generation suite and repeated-cycle playtests were not rerun, following the request for limited testing.
+
+The Windows x64 build succeeds with **zero errors and warnings**, **102,862,577 bytes**, in **25.91 s** (`Logs/PlanetBuild.txt`). Temporary preview tools are excluded from the player and removed before delivery.
+
 ## Larger survey and irregular forests — 2026-09-16
 
 Surface generator `meridian-surface-5` expands the region from **4 km² to 9 km²** (2.25×), using nine 1 km tiles. The terrain sample spacing remains **1.953125 m**; the 513-height, 128-layer and 257-water sample budgets remain per tile. The centered 3×3 grid uses a half-tile origin offset shared by height sampling, object ownership and future neighbor generation. The previous gentle landform settings are unchanged. Height/layer CPU arrays increase to approximately **9.04 / 2.81 MiB**; the shared ground-texture pixel payload stays **80 MiB**.

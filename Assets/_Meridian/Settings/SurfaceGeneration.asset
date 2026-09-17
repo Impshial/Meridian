@@ -15,7 +15,7 @@ MonoBehaviour:
   mappingRadius: 30000
   elevationScale: 450
   tileSize: 1000
-  initialTilesPerAxis: 3
+  initialTilesPerAxis: 6
   heightmapResolution: 513
   alphamapResolution: 128
   minimumTerrainHeight: -400

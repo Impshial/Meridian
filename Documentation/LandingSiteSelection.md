@@ -10,11 +10,11 @@ CONTINUE becomes available after selecting land. It immediately shows `Loading L
 
 | Surface control | Action |
 | --- | --- |
-| WASD / arrows | Pan relative to the camera's horizontal heading |
+| WASD / arrows | Move along screen-left/right and screen-up/down, on the ground plane |
 | Wheel | Smoothly tilt the overhead view; button-owned scrolling is ignored |
 | Shift + wheel | Smooth zoom in/out without changing tilt or heading; either Shift key works |
-| Middle-drag | Grab and pan horizontally on the X/Z plane; heading and tilt stay unchanged |
-| Q / E | Turn the camera heading by exactly −45° / +45° per press |
+| Middle-drag | Move the ground along the mouse's screen axes; heading and tilt stay unchanged |
+| Q / E | Smoothly interpolate to a −45° / +45° heading target per press; rapid presses accumulate |
 | + / − | Smooth keyboard zoom; the main keyboard's = key and numpad +/− are supported |
 | Left-click valid ground | Lock or replace the landing candidate |
 | R / Shift+R | Turn the preview ±45 degrees; revalidate a locked candidate |
@@ -23,11 +23,11 @@ CONTINUE becomes available after selecting land. It immediately shows `Loading L
 | LAND HERE | Revalidate and confirm the locked candidate |
 | BACK TO PLANET | Restore the planet, selection, rotation, and zoom |
 
-The surface camera has nominal 95–1,250 m zoom, a requested initial distance of 730 m, and 42–78° pitch. Its pan boundary reserves a circular ground footprint enclosing every allowed tilt and heading. At a given zoom and aspect ratio, the same X/Z limits apply to overhead and angled views: tilting or pressing Q/E at an edge cannot shift the ground focus. The default 3 km survey at 16:9 supports up to **594.24 m** distance, reserving some pan travel even at the widest view. Initial framing can move closer to retain a landing area near an edge. Zooming in increases pan travel; zooming out smoothly brings the focus inside the wider footprint. The lens maintains at least 24 m terrain clearance. Confirmation freezes placement editing, leaves the marker visible, and keeps the camera and BACK TO PLANET available. Choosing another planet region clears the previous surface, candidate, and confirmation.
+The surface camera has nominal 95–1,250 m zoom, a requested initial distance of 730 m, and 42–78° pitch. Its pan boundary reserves a circular ground footprint enclosing every allowed tilt and heading. At a given zoom and aspect ratio, the same X/Z limits apply to overhead and angled views: tilting or pressing Q/E at an edge cannot shift the ground focus. The default 6 km survey at 16:9 supports up to **1,217.56 m** distance, reserving some pan travel even at the widest view. The requested initial distance stays 730 m. At that distance the focus has approximately 2.87 km of travel on each world axis. Panning clips the requested movement as a whole at the boundary, preventing angled world edges from redirecting horizontal or vertical input. Middle-drag uses screen displacement instead of an off-center perspective grab, so vertical drags no longer drift sideways. Q/E uses unscaled exponential interpolation (rate 12), settling exactly at the accumulated target; repeated presses retain their direction across full turns. Initial framing can move closer to retain a landing area near an edge. Zooming in increases pan travel; zooming out smoothly brings the focus inside the wider footprint. The lens maintains at least 24 m terrain clearance. Confirmation freezes placement editing, leaves the marker visible, and keeps the camera and BACK TO PLANET available. Choosing another planet region clears the previous surface, candidate, and confirmation.
 
 ## Geography and coordinates
 
-`SurfaceGenerationSettings` records the prototype defaults; `SurfaceParameters` is its serializable snapshot. The generator version is **`meridian-surface-5`**, and setup records use `meridian-setup-1`. Version 5 expands the survey to 9 km² and replaces regularly spaced trees/groves with seeded continuous scattering. The flatter version 4 height settings remain. Start a fresh setup to see the expanded region and new forest distribution.
+`SurfaceGenerationSettings` records the prototype defaults; `SurfaceParameters` is its serializable snapshot. The generator version is **`meridian-surface-6`**, and setup records use `meridian-setup-1`. Version 6 expands the survey to 6 km × 6 km (36 km²), retaining version 5's seeded continuous forest scattering and version 4's gentle height settings. Start a fresh setup to see the expanded region.
 
 One Unity unit is one metre. Each colony has a frozen tangent frame anchored to the selected unit direction: local +X is east, +Z is north, and +Y is height. With mapping radius **30,000 m**, the geographic direction at logical `(x,z)` is:
 
@@ -45,7 +45,7 @@ Ocean and lake membership use the planet's smoothed, bilinear surface boundary a
 
 ## Regions, tiles, and readiness
 
-A selected gameplay region owns the colony frame and survey state. Rendering tiles are subdivisions of that frame. The initial survey is **3 km × 3 km (9 km²)**, **2.25 times** the previous 4 km². It comprises nine 1 km tiles, with each address axis ranging from −1 to +1. The odd tile count offsets tile origins by half a tile: `(0,0)` spans −500 to +500 m, keeping the full survey centered on the selected geographic anchor. `TileOrigin` and `TileOwner` share this convention, including future neighbor tiles. `initialTilesPerAxis` supports two to four tiles per axis. Each tile retains its **513 × 513** heightmap (1.953125 m sample spacing), **128 × 128** five-layer blend map, and water geometry sampled at 257 × 257 before shoreline clipping. The layers are grass/forest soil, sand, stone, snow, and damp earth. Numerical height/layer arrays now occupy approximately **9.04 / 2.81 MiB**, before Unity resources, water and props.
+A selected gameplay region owns the colony frame and survey state. Rendering tiles are subdivisions of that frame. The initial survey is **6 km × 6 km (36 km²)**, four times the previous 9 km². It comprises 36 one-kilometre tiles, with each address axis ranging from −3 to +2 and coordinates from −3,000 to +3,000 m. The full survey remains centered on the selected geographic anchor. `TileOrigin` and `TileOwner` share the origin convention, including future neighbor tiles and the half-tile offset used by odd counts. `initialTilesPerAxis` supports two to six tiles per axis. Each tile retains its **513 × 513** heightmap (1.953125 m sample spacing), **128 × 128** five-layer blend map, and water geometry sampled at 257 × 257 before shoreline clipping. The layers are grass/forest soil, sand, stone, snow, and damp earth. Numerical height/layer arrays now occupy approximately **36.14 / 11.25 MiB**, before Unity resources, water and props.
 
 `SurfaceWorldData.GenerateTile(address, cancellation)` is the extension API. It returns a neighbor's numerical data without modifying the active survey or moving its origin. Heights derive from integer global sample coordinates, so shared borders are identical. Generation uses global logical coordinates and stable hashes, not a random sequence dependent on tile order. Terrain neighbors are connected after main-thread creation.
 

@@ -50,7 +50,7 @@ namespace Meridian.Editor
             var world=SurfaceGenerator.Generate(planet,direction,settings);
             int tileCount=settings.initialTilesPerAxis*settings.initialTilesPerAxis;
             Require(world.Tiles.Length==tileCount && world.Tiles.All(t=>t.Heights.GetLength(0)==settings.heightmapResolution),"Wrong initial terrain budget.");
-            Require(world.Bounds.width*world.Bounds.height>=8000000,"Survey area did not at least double the previous 4 km2.");
+            Require(world.Bounds.width==6000 && world.Bounds.height==6000,"Survey does not cover the requested 6x6 km region.");
             Require(world.Tiles.All(t=>t.Origin==world.TileOrigin(t.Address) && t.Objects.All(o=>o.Owner==t.Address && world.TileOwner(new Vector2(o.Position.x,o.Position.z))==t.Address)),"Terrain/object tile ownership disagrees.");
             Require(world.BuildableArea>=settings.minimumBuildableArea && world.InteriorClearance>=settings.minimumInteriorSize,"Region bypassed measured flat-ground requirements.");
             float maximumAddedRelief=0,minimumHeight=float.PositiveInfinity,maximumHeight=float.NegativeInfinity;int visibleSlopes=0,gentleSamples=0,drySamples=0;
