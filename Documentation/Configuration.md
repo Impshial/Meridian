@@ -30,3 +30,5 @@ The original artwork is 1672 × 941 and preserved byte for byte. It is displayed
 The editor reports automatic Windows graphics APIs in this order: Direct3D12, Direct3D11. Graphics jobs and multithreaded rendering resolve to enabled. These are matching-editor defaults, not an explicit graphics API override.
 
 The saved brief is task reference material, not a standing instruction file for future agents. Future work should follow the user's current request.
+
+Full-game update: Active Input Handling is now Both (2) so runtime IMGUI windows receive native pointer/text events. Existing Input System 1.20.0 camera and menu controls are retained; Unity and package versions are unchanged. MainMenu now has five functional actions, including Continue. See FullGameValidation.md.

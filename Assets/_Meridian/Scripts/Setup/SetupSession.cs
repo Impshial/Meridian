@@ -22,6 +22,7 @@ namespace Meridian
         public Vector2Int[] surveyTiles;
         public LandingCandidate landing;
         public bool landingConfirmed;
+        public Vector2 plainCentre;public float plainHeight;public bool shapePlain;
     }
 
     /// <summary>Logical setup and one planet render cache. Scene objects never live here.</summary>
@@ -43,8 +44,8 @@ namespace Meridian
             if(!Current)new GameObject("Colony Setup Session",typeof(SetupSession));
             return Current;
         }
-        public static void BeginNew(){Ensure().Clear();}
-        public static void End(){if(Current){Current.Clear();Destroy(Current.gameObject);Current=null;}}
+        public static void BeginNew(){Colony.ColonyLoadPipeline.ClearPending();Ensure().Clear();}
+        public static void End(){Colony.ColonyLoadPipeline.ClearPending();if(Current){Current.Clear();Destroy(Current.gameObject);Current=null;}}
         void Awake()
         {
             if(Current && Current!=this){Destroy(gameObject);return;}
@@ -74,13 +75,16 @@ namespace Meridian
         {
             Surface=data;Record.surfaceParameters=data.Parameters;Record.surfaceFrame=data.Frame;
             Record.surfaceVersion=SurfaceGenerator.Version;
+            Record.plainCentre=data.PlainCentre;Record.plainHeight=data.PlainHeight;Record.shapePlain=data.ShapePlain;
             Record.surveyTiles=new Vector2Int[data.Tiles.Length];
             for(int i=0;i<data.Tiles.Length;i++)Record.surveyTiles[i]=data.Tiles[i].Address;
         }
         public void SetCandidate(LandingCandidate candidate)
         {if(!LandingConfirmed)Record.landing=candidate;}
         public void ConfirmLanding(LandingCandidate candidate)
-        {Record.landing=candidate;Record.landingConfirmed=true;}
+        {Record.landing=candidate;Record.landingConfirmed=true;Visuals?.Dispose();Visuals=null;Planet?.ReleaseAppearanceBuffers();}
+        public void Restore(ColonySetupRecord record,PlanetData planet,SurfaceWorldData surface)
+        {Clear();Record=record;Planet=planet;Surface=surface;HasGlobeView=true;}
         void Clear()
         {
             RegionRevision++;Visuals?.Dispose();Visuals=null;Planet=null;Surface=null;

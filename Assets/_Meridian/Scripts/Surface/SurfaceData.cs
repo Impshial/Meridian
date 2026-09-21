@@ -98,6 +98,8 @@ namespace Meridian
         // Unity Terrain order is [z,x], and [z,x,layer]. All tiles share the same height datum.
         public float[,] Heights;
         public float[,,] Layers;
+        // Retained from the same shoreline samples used to construct the rendered water mesh.
+        public float[,] WaterClearance;
         public SurfaceWaterMesh Water;
         public SurfaceObjectData[] Objects;
     }
@@ -139,6 +141,7 @@ namespace Meridian
         public Vector2 PlainCentre {get;internal set;}
         public float PlainHeight {get;internal set;}
         internal bool ShapePlain;
+        public bool HasShapedPlain=>ShapePlain;
         internal readonly PlanetData Planet;
         internal readonly SurfaceGenerator.Geography Geography;
         internal SurfaceWorldData(PlanetData planet,SurfaceFrame frame,SurfaceParameters parameters)

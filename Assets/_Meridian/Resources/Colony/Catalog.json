@@ -1,0 +1,2247 @@
+{
+  "balance": {
+    "daySeconds": 120,
+    "daysPerYear": 12,
+    "step": 0.1,
+    "foodPerPersonDay": 2,
+    "waterPerPersonDay": 2,
+    "wearPerDay": 0.003,
+    "maintenanceThreshold": 0.7,
+    "flightFee": 100,
+    "flightDays": 1,
+    "freightDays": 3,
+    "freightCapacity": 200,
+    "researchPerDay": 10,
+    "greenhousePerDay": 30,
+    "terraformPerYear": 1.4,
+    "terraformCap": 2,
+    "terraformFunding": 2000,
+    "recruitCost": 300,
+    "regionCost": 2500,
+    "refundFraction": 0.6,
+    "startingCredits": 20000,
+    "workRobots": 6,
+    "forestryBots": 2,
+    "drones": 4,
+    "flightSeats": 6,
+    "autosaves": 5,
+    "autosaveSeconds": 300,
+    "tendingSecondsPerDay": 18,
+    "trainingHours": 8,
+    "manifest": [
+      {
+        "good": 4,
+        "quantity": 600
+      },
+      {
+        "good": 2,
+        "quantity": 500
+      },
+      {
+        "good": 5,
+        "quantity": 180
+      },
+      {
+        "good": 3,
+        "quantity": 120
+      },
+      {
+        "good": 0,
+        "quantity": 160
+      },
+      {
+        "good": 1,
+        "quantity": 120
+      },
+      {
+        "good": 6,
+        "quantity": 360
+      },
+      {
+        "good": 7,
+        "quantity": 24
+      },
+      {
+        "good": 8,
+        "quantity": 600
+      },
+      {
+        "good": 9,
+        "quantity": 12
+      },
+      {
+        "good": 10,
+        "quantity": 8
+      }
+    ]
+  },
+  "goods": [
+    {
+      "id": 0,
+      "name": "Iron Ore",
+      "buy": 3,
+      "stack": 100
+    },
+    {
+      "id": 1,
+      "name": "Copper Ore",
+      "buy": 4,
+      "stack": 100
+    },
+    {
+      "id": 2,
+      "name": "Minerals",
+      "buy": 2,
+      "stack": 100
+    },
+    {
+      "id": 3,
+      "name": "Biomass",
+      "buy": 2,
+      "stack": 100
+    },
+    {
+      "id": 4,
+      "name": "Metal",
+      "buy": 8,
+      "stack": 100
+    },
+    {
+      "id": 5,
+      "name": "Components",
+      "buy": 20,
+      "stack": 100
+    },
+    {
+      "id": 6,
+      "name": "Food",
+      "buy": 5,
+      "stack": 100
+    },
+    {
+      "id": 7,
+      "name": "Medicine",
+      "buy": 25,
+      "stack": 100
+    },
+    {
+      "id": 8,
+      "name": "Water",
+      "buy": 1,
+      "stack": 100
+    },
+    {
+      "id": 9,
+      "name": "EVA Suit",
+      "buy": 120,
+      "stack": 1
+    },
+    {
+      "id": 10,
+      "name": "Civilian Toolkit",
+      "buy": 35,
+      "stack": 1
+    },
+    {
+      "id": 11,
+      "name": "Work Robot",
+      "buy": 480,
+      "stack": 1
+    },
+    {
+      "id": 12,
+      "name": "Forestry Bot",
+      "buy": 580,
+      "stack": 1
+    },
+    {
+      "id": 13,
+      "name": "Transport Drone",
+      "buy": 320,
+      "stack": 1
+    }
+  ],
+  "buildings": [
+    {
+      "id": "ship",
+      "name": "Landed Cargo Ship",
+      "category": "Starting",
+      "description": "Landed Cargo Ship",
+      "model": "Dropship",
+      "research": "",
+      "sealedModule": true,
+      "machineOnly": false,
+      "link": false,
+      "size": {
+        "x": 14,
+        "y": 26
+      },
+      "height": 8,
+      "power": 0,
+      "generation": 30,
+      "capacity": 4000,
+      "waterCapacity": 800,
+      "buildSeconds": 30,
+      "beds": 0,
+      "seats": 0,
+      "staff": 0,
+      "airSupport": 0,
+      "waterPerDay": 0,
+      "outputPerDay": 0,
+      "profession": 0,
+      "recipe": "",
+      "cost": []
+    },
+    {
+      "id": "apron",
+      "name": "Personnel Apron",
+      "category": "Starting",
+      "description": "Personnel Apron",
+      "model": "Apron",
+      "research": "",
+      "sealedModule": false,
+      "machineOnly": false,
+      "link": false,
+      "size": {
+        "x": 14,
+        "y": 16
+      },
+      "height": 2,
+      "power": 0,
+      "generation": 0,
+      "capacity": 200,
+      "waterCapacity": 0,
+      "buildSeconds": 30,
+      "beds": 0,
+      "seats": 0,
+      "staff": 0,
+      "airSupport": 0,
+      "waterPerDay": 0,
+      "outputPerDay": 0,
+      "profession": 0,
+      "recipe": "",
+      "cost": []
+    },
+    {
+      "id": "habitat",
+      "name": "Habitat",
+      "category": "Housing",
+      "description": "Habitat",
+      "model": "HabitatDome",
+      "research": "",
+      "sealedModule": true,
+      "machineOnly": false,
+      "link": false,
+      "size": {
+        "x": 16,
+        "y": 16
+      },
+      "height": 8,
+      "power": 3,
+      "generation": 0,
+      "capacity": 80,
+      "waterCapacity": 0,
+      "buildSeconds": 30,
+      "beds": 8,
+      "seats": 0,
+      "staff": 0,
+      "airSupport": 0,
+      "waterPerDay": 0,
+      "outputPerDay": 0,
+      "profession": 0,
+      "recipe": "",
+      "cost": [
+        {
+          "good": 4,
+          "quantity": 30
+        },
+        {
+          "good": 2,
+          "quantity": 20
+        },
+        {
+          "good": 5,
+          "quantity": 6
+        }
+      ]
+    },
+    {
+      "id": "canteen",
+      "name": "Canteen",
+      "category": "Survival",
+      "description": "Canteen",
+      "model": "HabitatDome",
+      "research": "",
+      "sealedModule": true,
+      "machineOnly": false,
+      "link": false,
+      "size": {
+        "x": 16,
+        "y": 16
+      },
+      "height": 8,
+      "power": 2,
+      "generation": 0,
+      "capacity": 180,
+      "waterCapacity": 0,
+      "buildSeconds": 30,
+      "beds": 0,
+      "seats": 12,
+      "staff": 1,
+      "airSupport": 0,
+      "waterPerDay": 0,
+      "outputPerDay": 0,
+      "profession": 5,
+      "recipe": "",
+      "cost": [
+        {
+          "good": 4,
+          "quantity": 20
+        },
+        {
+          "good": 2,
+          "quantity": 10
+        },
+        {
+          "good": 5,
+          "quantity": 4
+        }
+      ]
+    },
+    {
+      "id": "greenhouse",
+      "name": "Greenhouse",
+      "category": "Survival",
+      "description": "Greenhouse",
+      "model": "HabitatDome",
+      "research": "",
+      "sealedModule": true,
+      "machineOnly": false,
+      "link": false,
+      "size": {
+        "x": 18,
+        "y": 18
+      },
+      "height": 8,
+      "power": 6,
+      "generation": 0,
+      "capacity": 120,
+      "waterCapacity": 0,
+      "buildSeconds": 30,
+      "beds": 0,
+      "seats": 0,
+      "staff": 2,
+      "airSupport": 0,
+      "waterPerDay": 12,
+      "outputPerDay": 30,
+      "profession": 1,
+      "recipe": "",
+      "cost": [
+        {
+          "good": 4,
+          "quantity": 25
+        },
+        {
+          "good": 2,
+          "quantity": 15
+        },
+        {
+          "good": 5,
+          "quantity": 5
+        }
+      ]
+    },
+    {
+      "id": "clinic",
+      "name": "Clinic",
+      "category": "Survival",
+      "description": "Clinic",
+      "model": "HabitatDome",
+      "research": "",
+      "sealedModule": true,
+      "machineOnly": false,
+      "link": false,
+      "size": {
+        "x": 14,
+        "y": 14
+      },
+      "height": 8,
+      "power": 3,
+      "generation": 0,
+      "capacity": 100,
+      "waterCapacity": 0,
+      "buildSeconds": 30,
+      "beds": 4,
+      "seats": 0,
+      "staff": 1,
+      "airSupport": 0,
+      "waterPerDay": 0,
+      "outputPerDay": 0,
+      "profession": 2,
+      "recipe": "",
+      "cost": [
+        {
+          "good": 4,
+          "quantity": 20
+        },
+        {
+          "good": 2,
+          "quantity": 15
+        },
+        {
+          "good": 5,
+          "quantity": 6
+        }
+      ]
+    },
+    {
+      "id": "lab",
+      "name": "Laboratory",
+      "category": "Development",
+      "description": "Laboratory",
+      "model": "HabitatDome",
+      "research": "",
+      "sealedModule": true,
+      "machineOnly": false,
+      "link": false,
+      "size": {
+        "x": 16,
+        "y": 16
+      },
+      "height": 9,
+      "power": 5,
+      "generation": 0,
+      "capacity": 100,
+      "waterCapacity": 0,
+      "buildSeconds": 30,
+      "beds": 0,
+      "seats": 0,
+      "staff": 2,
+      "airSupport": 0,
+      "waterPerDay": 0,
+      "outputPerDay": 0,
+      "profession": 3,
+      "recipe": "",
+      "cost": [
+        {
+          "good": 4,
+          "quantity": 30
+        },
+        {
+          "good": 2,
+          "quantity": 20
+        },
+        {
+          "good": 5,
+          "quantity": 8
+        }
+      ]
+    },
+    {
+      "id": "sanitation",
+      "name": "Sanitation Module",
+      "category": "Survival",
+      "description": "Sanitation Module",
+      "model": "HabitatDome",
+      "research": "",
+      "sealedModule": true,
+      "machineOnly": false,
+      "link": false,
+      "size": {
+        "x": 12,
+        "y": 12
+      },
+      "height": 7,
+      "power": 2,
+      "generation": 0,
+      "capacity": 80,
+      "waterCapacity": 0,
+      "buildSeconds": 30,
+      "beds": 0,
+      "seats": 6,
+      "staff": 0,
+      "airSupport": 0,
+      "waterPerDay": 6,
+      "outputPerDay": 0,
+      "profession": 0,
+      "recipe": "",
+      "cost": [
+        {
+          "good": 4,
+          "quantity": 15
+        },
+        {
+          "good": 2,
+          "quantity": 15
+        },
+        {
+          "good": 5,
+          "quantity": 4
+        }
+      ]
+    },
+    {
+      "id": "lounge",
+      "name": "Leisure Lounge",
+      "category": "Services",
+      "description": "Leisure Lounge",
+      "model": "HabitatDome",
+      "research": "",
+      "sealedModule": true,
+      "machineOnly": false,
+      "link": false,
+      "size": {
+        "x": 16,
+        "y": 16
+      },
+      "height": 8,
+      "power": 3,
+      "generation": 0,
+      "capacity": 80,
+      "waterCapacity": 0,
+      "buildSeconds": 30,
+      "beds": 0,
+      "seats": 12,
+      "staff": 1,
+      "airSupport": 0,
+      "waterPerDay": 0,
+      "outputPerDay": 0,
+      "profession": 5,
+      "recipe": "",
+      "cost": [
+        {
+          "good": 4,
+          "quantity": 20
+        },
+        {
+          "good": 2,
+          "quantity": 15
+        },
+        {
+          "good": 5,
+          "quantity": 4
+        }
+      ]
+    },
+    {
+      "id": "warehouse",
+      "name": "Warehouse",
+      "category": "Storage",
+      "description": "Warehouse",
+      "model": "HabitatDome",
+      "research": "",
+      "sealedModule": true,
+      "machineOnly": false,
+      "link": false,
+      "size": {
+        "x": 18,
+        "y": 18
+      },
+      "height": 9,
+      "power": 1,
+      "generation": 0,
+      "capacity": 2000,
+      "waterCapacity": 0,
+      "buildSeconds": 30,
+      "beds": 0,
+      "seats": 0,
+      "staff": 0,
+      "airSupport": 0,
+      "waterPerDay": 0,
+      "outputPerDay": 0,
+      "profession": 0,
+      "recipe": "",
+      "cost": [
+        {
+          "good": 4,
+          "quantity": 20
+        },
+        {
+          "good": 2,
+          "quantity": 10
+        },
+        {
+          "good": 5,
+          "quantity": 2
+        }
+      ]
+    },
+    {
+      "id": "training",
+      "name": "Control & Training Center",
+      "category": "Development",
+      "description": "Control & Training Center",
+      "model": "HabitatDome",
+      "research": "",
+      "sealedModule": true,
+      "machineOnly": false,
+      "link": false,
+      "size": {
+        "x": 16,
+        "y": 16
+      },
+      "height": 9,
+      "power": 3,
+      "generation": 0,
+      "capacity": 120,
+      "waterCapacity": 0,
+      "buildSeconds": 30,
+      "beds": 0,
+      "seats": 0,
+      "staff": 1,
+      "airSupport": 0,
+      "waterPerDay": 0,
+      "outputPerDay": 0,
+      "profession": 4,
+      "recipe": "",
+      "cost": [
+        {
+          "good": 4,
+          "quantity": 20
+        },
+        {
+          "good": 2,
+          "quantity": 10
+        },
+        {
+          "good": 5,
+          "quantity": 6
+        }
+      ]
+    },
+    {
+      "id": "reception",
+      "name": "Visitor Reception",
+      "category": "Visitors",
+      "description": "Visitor Reception",
+      "model": "HabitatDome",
+      "research": "visitor",
+      "sealedModule": true,
+      "machineOnly": false,
+      "link": false,
+      "size": {
+        "x": 18,
+        "y": 18
+      },
+      "height": 9,
+      "power": 4,
+      "generation": 0,
+      "capacity": 160,
+      "waterCapacity": 0,
+      "buildSeconds": 30,
+      "beds": 0,
+      "seats": 8,
+      "staff": 2,
+      "airSupport": 0,
+      "waterPerDay": 0,
+      "outputPerDay": 0,
+      "profession": 5,
+      "recipe": "",
+      "cost": [
+        {
+          "good": 4,
+          "quantity": 35
+        },
+        {
+          "good": 2,
+          "quantity": 20
+        },
+        {
+          "good": 5,
+          "quantity": 10
+        }
+      ]
+    },
+    {
+      "id": "lodge",
+      "name": "Guest Lodge",
+      "category": "Visitors",
+      "description": "Guest Lodge",
+      "model": "HabitatDome",
+      "research": "visitor",
+      "sealedModule": true,
+      "machineOnly": false,
+      "link": false,
+      "size": {
+        "x": 18,
+        "y": 18
+      },
+      "height": 9,
+      "power": 4,
+      "generation": 0,
+      "capacity": 100,
+      "waterCapacity": 0,
+      "buildSeconds": 30,
+      "beds": 8,
+      "seats": 0,
+      "staff": 0,
+      "airSupport": 0,
+      "waterPerDay": 0,
+      "outputPerDay": 0,
+      "profession": 0,
+      "recipe": "",
+      "cost": [
+        {
+          "good": 4,
+          "quantity": 35
+        },
+        {
+          "good": 2,
+          "quantity": 25
+        },
+        {
+          "good": 5,
+          "quantity": 8
+        }
+      ]
+    },
+    {
+      "id": "restaurant",
+      "name": "Restaurant",
+      "category": "Visitors",
+      "description": "Restaurant",
+      "model": "HabitatDome",
+      "research": "visitor",
+      "sealedModule": true,
+      "machineOnly": false,
+      "link": false,
+      "size": {
+        "x": 18,
+        "y": 18
+      },
+      "height": 9,
+      "power": 4,
+      "generation": 0,
+      "capacity": 180,
+      "waterCapacity": 0,
+      "buildSeconds": 30,
+      "beds": 0,
+      "seats": 16,
+      "staff": 2,
+      "airSupport": 0,
+      "waterPerDay": 0,
+      "outputPerDay": 0,
+      "profession": 5,
+      "recipe": "",
+      "cost": [
+        {
+          "good": 4,
+          "quantity": 25
+        },
+        {
+          "good": 2,
+          "quantity": 20
+        },
+        {
+          "good": 5,
+          "quantity": 6
+        }
+      ]
+    },
+    {
+      "id": "attraction",
+      "name": "Observation & Exhibition",
+      "category": "Visitors",
+      "description": "Observation & Exhibition",
+      "model": "HabitatDome",
+      "research": "visitor",
+      "sealedModule": true,
+      "machineOnly": false,
+      "link": false,
+      "size": {
+        "x": 20,
+        "y": 20
+      },
+      "height": 12,
+      "power": 6,
+      "generation": 0,
+      "capacity": 100,
+      "waterCapacity": 0,
+      "buildSeconds": 30,
+      "beds": 0,
+      "seats": 12,
+      "staff": 1,
+      "airSupport": 0,
+      "waterPerDay": 0,
+      "outputPerDay": 0,
+      "profession": 5,
+      "recipe": "",
+      "cost": [
+        {
+          "good": 4,
+          "quantity": 40
+        },
+        {
+          "good": 2,
+          "quantity": 30
+        },
+        {
+          "good": 5,
+          "quantity": 10
+        }
+      ]
+    },
+    {
+      "id": "garden",
+      "name": "Indoor Botanical Garden",
+      "category": "Visitors",
+      "description": "Indoor Botanical Garden",
+      "model": "HabitatDome",
+      "research": "visitor",
+      "sealedModule": true,
+      "machineOnly": false,
+      "link": false,
+      "size": {
+        "x": 20,
+        "y": 20
+      },
+      "height": 10,
+      "power": 4,
+      "generation": 0,
+      "capacity": 100,
+      "waterCapacity": 0,
+      "buildSeconds": 30,
+      "beds": 0,
+      "seats": 12,
+      "staff": 1,
+      "airSupport": 0,
+      "waterPerDay": 4,
+      "outputPerDay": 0,
+      "profession": 1,
+      "recipe": "",
+      "cost": [
+        {
+          "good": 4,
+          "quantity": 35
+        },
+        {
+          "good": 2,
+          "quantity": 25
+        },
+        {
+          "good": 5,
+          "quantity": 8
+        }
+      ]
+    },
+    {
+      "id": "airlock",
+      "name": "Airlock",
+      "category": "Survival",
+      "description": "Airlock",
+      "model": "Airlock",
+      "research": "",
+      "sealedModule": true,
+      "machineOnly": false,
+      "link": false,
+      "size": {
+        "x": 8,
+        "y": 8
+      },
+      "height": 5,
+      "power": 1,
+      "generation": 0,
+      "capacity": 100,
+      "waterCapacity": 0,
+      "buildSeconds": 30,
+      "beds": 0,
+      "seats": 0,
+      "staff": 0,
+      "airSupport": 0,
+      "waterPerDay": 0,
+      "outputPerDay": 0,
+      "profession": 0,
+      "recipe": "",
+      "cost": [
+        {
+          "good": 4,
+          "quantity": 10
+        },
+        {
+          "good": 2,
+          "quantity": 5
+        },
+        {
+          "good": 5,
+          "quantity": 3
+        }
+      ]
+    },
+    {
+      "id": "corridor",
+      "name": "Pressurized Corridor",
+      "category": "Connections",
+      "description": "Pressurized Corridor",
+      "model": "Corridor",
+      "research": "",
+      "sealedModule": true,
+      "machineOnly": false,
+      "link": true,
+      "size": {
+        "x": 4,
+        "y": 10
+      },
+      "height": 4,
+      "power": 0.2,
+      "generation": 0,
+      "capacity": 0,
+      "waterCapacity": 0,
+      "buildSeconds": 8,
+      "beds": 0,
+      "seats": 0,
+      "staff": 0,
+      "airSupport": 0,
+      "waterPerDay": 0,
+      "outputPerDay": 0,
+      "profession": 0,
+      "recipe": "",
+      "cost": [
+        {
+          "good": 4,
+          "quantity": 2
+        },
+        {
+          "good": 2,
+          "quantity": 1
+        }
+      ]
+    },
+    {
+      "id": "stockyard",
+      "name": "Stockyard",
+      "category": "Storage",
+      "description": "Stockyard",
+      "model": "StorageModule",
+      "research": "",
+      "sealedModule": false,
+      "machineOnly": true,
+      "link": false,
+      "size": {
+        "x": 16,
+        "y": 16
+      },
+      "height": 5,
+      "power": 0,
+      "generation": 0,
+      "capacity": 1000,
+      "waterCapacity": 0,
+      "buildSeconds": 30,
+      "beds": 0,
+      "seats": 0,
+      "staff": 0,
+      "airSupport": 0,
+      "waterPerDay": 0,
+      "outputPerDay": 0,
+      "profession": 0,
+      "recipe": "",
+      "cost": [
+        {
+          "good": 4,
+          "quantity": 10
+        },
+        {
+          "good": 2,
+          "quantity": 5
+        }
+      ]
+    },
+    {
+      "id": "solar",
+      "name": "Solar Array",
+      "category": "Utilities",
+      "description": "Solar Array",
+      "model": "Solar",
+      "research": "",
+      "sealedModule": false,
+      "machineOnly": true,
+      "link": false,
+      "size": {
+        "x": 16,
+        "y": 12
+      },
+      "height": 6,
+      "power": 0,
+      "generation": 50,
+      "capacity": 40,
+      "waterCapacity": 0,
+      "buildSeconds": 30,
+      "beds": 0,
+      "seats": 0,
+      "staff": 0,
+      "airSupport": 0,
+      "waterPerDay": 0,
+      "outputPerDay": 0,
+      "profession": 0,
+      "recipe": "",
+      "cost": [
+        {
+          "good": 4,
+          "quantity": 20
+        },
+        {
+          "good": 2,
+          "quantity": 10
+        },
+        {
+          "good": 5,
+          "quantity": 5
+        }
+      ]
+    },
+    {
+      "id": "wind",
+      "name": "Wind Generator",
+      "category": "Utilities",
+      "description": "Wind Generator",
+      "model": "Wind",
+      "research": "",
+      "sealedModule": false,
+      "machineOnly": true,
+      "link": false,
+      "size": {
+        "x": 10,
+        "y": 10
+      },
+      "height": 22,
+      "power": 0,
+      "generation": 40,
+      "capacity": 40,
+      "waterCapacity": 0,
+      "buildSeconds": 30,
+      "beds": 0,
+      "seats": 0,
+      "staff": 0,
+      "airSupport": 0,
+      "waterPerDay": 0,
+      "outputPerDay": 0,
+      "profession": 0,
+      "recipe": "",
+      "cost": [
+        {
+          "good": 4,
+          "quantity": 25
+        },
+        {
+          "good": 2,
+          "quantity": 10
+        },
+        {
+          "good": 5,
+          "quantity": 5
+        }
+      ]
+    },
+    {
+      "id": "battery",
+      "name": "Battery Bank",
+      "category": "Utilities",
+      "description": "Battery Bank",
+      "model": "PowerMachine",
+      "research": "",
+      "sealedModule": false,
+      "machineOnly": true,
+      "link": false,
+      "size": {
+        "x": 8,
+        "y": 8
+      },
+      "height": 5,
+      "power": 0,
+      "generation": 0,
+      "capacity": 40,
+      "waterCapacity": 0,
+      "buildSeconds": 30,
+      "beds": 0,
+      "seats": 0,
+      "staff": 0,
+      "airSupport": 0,
+      "waterPerDay": 0,
+      "outputPerDay": 0,
+      "profession": 0,
+      "recipe": "",
+      "cost": [
+        {
+          "good": 4,
+          "quantity": 12
+        },
+        {
+          "good": 2,
+          "quantity": 8
+        },
+        {
+          "good": 5,
+          "quantity": 6
+        }
+      ]
+    },
+    {
+      "id": "well",
+      "name": "Water Well",
+      "category": "Utilities",
+      "description": "Water Well",
+      "model": "PowerMachine",
+      "research": "",
+      "sealedModule": false,
+      "machineOnly": true,
+      "link": false,
+      "size": {
+        "x": 9,
+        "y": 9
+      },
+      "height": 6,
+      "power": 4,
+      "generation": 0,
+      "capacity": 40,
+      "waterCapacity": 150,
+      "buildSeconds": 30,
+      "beds": 0,
+      "seats": 0,
+      "staff": 0,
+      "airSupport": 0,
+      "waterPerDay": 0,
+      "outputPerDay": 100,
+      "profession": 0,
+      "recipe": "",
+      "cost": [
+        {
+          "good": 4,
+          "quantity": 15
+        },
+        {
+          "good": 2,
+          "quantity": 10
+        },
+        {
+          "good": 5,
+          "quantity": 4
+        }
+      ]
+    },
+    {
+      "id": "tank",
+      "name": "Water Tank",
+      "category": "Utilities",
+      "description": "Water Tank",
+      "model": "Tank",
+      "research": "",
+      "sealedModule": false,
+      "machineOnly": true,
+      "link": false,
+      "size": {
+        "x": 9,
+        "y": 9
+      },
+      "height": 9,
+      "power": 0,
+      "generation": 0,
+      "capacity": 40,
+      "waterCapacity": 1000,
+      "buildSeconds": 30,
+      "beds": 0,
+      "seats": 0,
+      "staff": 0,
+      "airSupport": 0,
+      "waterPerDay": 0,
+      "outputPerDay": 0,
+      "profession": 0,
+      "recipe": "",
+      "cost": [
+        {
+          "good": 4,
+          "quantity": 10
+        },
+        {
+          "good": 2,
+          "quantity": 10
+        },
+        {
+          "good": 5,
+          "quantity": 2
+        }
+      ]
+    },
+    {
+      "id": "air",
+      "name": "Air Processor",
+      "category": "Utilities",
+      "description": "Air Processor",
+      "model": "PowerMachine",
+      "research": "",
+      "sealedModule": false,
+      "machineOnly": true,
+      "link": false,
+      "size": {
+        "x": 10,
+        "y": 10
+      },
+      "height": 7,
+      "power": 5,
+      "generation": 0,
+      "capacity": 40,
+      "waterCapacity": 0,
+      "buildSeconds": 30,
+      "beds": 0,
+      "seats": 0,
+      "staff": 0,
+      "airSupport": 32,
+      "waterPerDay": 10,
+      "outputPerDay": 0,
+      "profession": 0,
+      "recipe": "",
+      "cost": [
+        {
+          "good": 4,
+          "quantity": 20
+        },
+        {
+          "good": 2,
+          "quantity": 15
+        },
+        {
+          "good": 5,
+          "quantity": 6
+        }
+      ]
+    },
+    {
+      "id": "charger",
+      "name": "Charging Station",
+      "category": "Utilities",
+      "description": "Charging Station",
+      "model": "Charger",
+      "research": "",
+      "sealedModule": false,
+      "machineOnly": true,
+      "link": false,
+      "size": {
+        "x": 10,
+        "y": 8
+      },
+      "height": 4,
+      "power": 4,
+      "generation": 0,
+      "capacity": 50,
+      "waterCapacity": 0,
+      "buildSeconds": 30,
+      "beds": 0,
+      "seats": 0,
+      "staff": 0,
+      "airSupport": 0,
+      "waterPerDay": 0,
+      "outputPerDay": 0,
+      "profession": 0,
+      "recipe": "",
+      "cost": [
+        {
+          "good": 4,
+          "quantity": 10
+        },
+        {
+          "good": 2,
+          "quantity": 5
+        },
+        {
+          "good": 5,
+          "quantity": 3
+        }
+      ]
+    },
+    {
+      "id": "miner",
+      "name": "Autonomous Miner",
+      "category": "Industry",
+      "description": "Autonomous Miner",
+      "model": "MiningDrill",
+      "research": "",
+      "sealedModule": false,
+      "machineOnly": true,
+      "link": false,
+      "size": {
+        "x": 10,
+        "y": 10
+      },
+      "height": 9,
+      "power": 5,
+      "generation": 0,
+      "capacity": 100,
+      "waterCapacity": 0,
+      "buildSeconds": 30,
+      "beds": 0,
+      "seats": 0,
+      "staff": 0,
+      "airSupport": 0,
+      "waterPerDay": 0,
+      "outputPerDay": 80,
+      "profession": 0,
+      "recipe": "",
+      "cost": [
+        {
+          "good": 4,
+          "quantity": 15
+        },
+        {
+          "good": 2,
+          "quantity": 10
+        },
+        {
+          "good": 5,
+          "quantity": 3
+        }
+      ]
+    },
+    {
+      "id": "quarry",
+      "name": "Autonomous Quarry",
+      "category": "Industry",
+      "description": "Autonomous Quarry",
+      "model": "MiningDrill",
+      "research": "",
+      "sealedModule": false,
+      "machineOnly": true,
+      "link": false,
+      "size": {
+        "x": 12,
+        "y": 12
+      },
+      "height": 9,
+      "power": 5,
+      "generation": 0,
+      "capacity": 100,
+      "waterCapacity": 0,
+      "buildSeconds": 30,
+      "beds": 0,
+      "seats": 0,
+      "staff": 0,
+      "airSupport": 0,
+      "waterPerDay": 0,
+      "outputPerDay": 100,
+      "profession": 0,
+      "recipe": "",
+      "cost": [
+        {
+          "good": 4,
+          "quantity": 15
+        },
+        {
+          "good": 2,
+          "quantity": 10
+        },
+        {
+          "good": 5,
+          "quantity": 3
+        }
+      ]
+    },
+    {
+      "id": "ice",
+      "name": "Ice Extractor / Melter",
+      "category": "Industry",
+      "description": "Ice Extractor / Melter",
+      "model": "MiningDrill",
+      "research": "",
+      "sealedModule": false,
+      "machineOnly": true,
+      "link": false,
+      "size": {
+        "x": 10,
+        "y": 10
+      },
+      "height": 9,
+      "power": 5,
+      "generation": 0,
+      "capacity": 80,
+      "waterCapacity": 150,
+      "buildSeconds": 30,
+      "beds": 0,
+      "seats": 0,
+      "staff": 0,
+      "airSupport": 0,
+      "waterPerDay": 0,
+      "outputPerDay": 100,
+      "profession": 0,
+      "recipe": "",
+      "cost": [
+        {
+          "good": 4,
+          "quantity": 15
+        },
+        {
+          "good": 2,
+          "quantity": 10
+        },
+        {
+          "good": 5,
+          "quantity": 3
+        }
+      ]
+    },
+    {
+      "id": "smelter",
+      "name": "Smelter",
+      "category": "Industry",
+      "description": "Smelter",
+      "model": "PowerMachine",
+      "research": "",
+      "sealedModule": false,
+      "machineOnly": true,
+      "link": false,
+      "size": {
+        "x": 12,
+        "y": 12
+      },
+      "height": 8,
+      "power": 6,
+      "generation": 0,
+      "capacity": 180,
+      "waterCapacity": 0,
+      "buildSeconds": 30,
+      "beds": 0,
+      "seats": 0,
+      "staff": 0,
+      "airSupport": 0,
+      "waterPerDay": 0,
+      "outputPerDay": 0,
+      "profession": 0,
+      "recipe": "smelt",
+      "cost": [
+        {
+          "good": 4,
+          "quantity": 20
+        },
+        {
+          "good": 2,
+          "quantity": 15
+        },
+        {
+          "good": 5,
+          "quantity": 5
+        }
+      ]
+    },
+    {
+      "id": "assembler",
+      "name": "Component Assembler",
+      "category": "Industry",
+      "description": "Component Assembler",
+      "model": "IndustrialRobot",
+      "research": "",
+      "sealedModule": false,
+      "machineOnly": true,
+      "link": false,
+      "size": {
+        "x": 12,
+        "y": 12
+      },
+      "height": 8,
+      "power": 8,
+      "generation": 0,
+      "capacity": 180,
+      "waterCapacity": 0,
+      "buildSeconds": 30,
+      "beds": 0,
+      "seats": 0,
+      "staff": 0,
+      "airSupport": 0,
+      "waterPerDay": 0,
+      "outputPerDay": 0,
+      "profession": 0,
+      "recipe": "component",
+      "cost": [
+        {
+          "good": 4,
+          "quantity": 25
+        },
+        {
+          "good": 2,
+          "quantity": 20
+        },
+        {
+          "good": 5,
+          "quantity": 8
+        }
+      ]
+    },
+    {
+      "id": "medicine",
+      "name": "Medicine Fabricator",
+      "category": "Industry",
+      "description": "Medicine Fabricator",
+      "model": "IndustrialRobot",
+      "research": "medical",
+      "sealedModule": false,
+      "machineOnly": true,
+      "link": false,
+      "size": {
+        "x": 12,
+        "y": 12
+      },
+      "height": 8,
+      "power": 4,
+      "generation": 0,
+      "capacity": 140,
+      "waterCapacity": 0,
+      "buildSeconds": 30,
+      "beds": 0,
+      "seats": 0,
+      "staff": 0,
+      "airSupport": 0,
+      "waterPerDay": 0,
+      "outputPerDay": 0,
+      "profession": 0,
+      "recipe": "medicine",
+      "cost": [
+        {
+          "good": 4,
+          "quantity": 25
+        },
+        {
+          "good": 2,
+          "quantity": 15
+        },
+        {
+          "good": 5,
+          "quantity": 8
+        }
+      ]
+    },
+    {
+      "id": "robotworks",
+      "name": "Robot Fabricator",
+      "category": "Industry",
+      "description": "Robot Fabricator",
+      "model": "IndustrialRobot",
+      "research": "",
+      "sealedModule": false,
+      "machineOnly": true,
+      "link": false,
+      "size": {
+        "x": 16,
+        "y": 16
+      },
+      "height": 9,
+      "power": 8,
+      "generation": 0,
+      "capacity": 200,
+      "waterCapacity": 0,
+      "buildSeconds": 30,
+      "beds": 0,
+      "seats": 0,
+      "staff": 0,
+      "airSupport": 0,
+      "waterPerDay": 0,
+      "outputPerDay": 0,
+      "profession": 0,
+      "recipe": "workbot",
+      "cost": [
+        {
+          "good": 4,
+          "quantity": 35
+        },
+        {
+          "good": 2,
+          "quantity": 20
+        },
+        {
+          "good": 5,
+          "quantity": 10
+        }
+      ]
+    },
+    {
+      "id": "repair",
+      "name": "Repair Pad",
+      "category": "Industry",
+      "description": "Repair Pad",
+      "model": "Repair",
+      "research": "",
+      "sealedModule": false,
+      "machineOnly": true,
+      "link": false,
+      "size": {
+        "x": 12,
+        "y": 12
+      },
+      "height": 5,
+      "power": 4,
+      "generation": 0,
+      "capacity": 160,
+      "waterCapacity": 0,
+      "buildSeconds": 30,
+      "beds": 0,
+      "seats": 0,
+      "staff": 0,
+      "airSupport": 0,
+      "waterPerDay": 0,
+      "outputPerDay": 0,
+      "profession": 0,
+      "recipe": "",
+      "cost": [
+        {
+          "good": 4,
+          "quantity": 20
+        },
+        {
+          "good": 2,
+          "quantity": 10
+        },
+        {
+          "good": 5,
+          "quantity": 5
+        }
+      ]
+    },
+    {
+      "id": "geothermal",
+      "name": "Geothermal Plant",
+      "category": "Utilities",
+      "description": "Geothermal Plant",
+      "model": "PowerMachine",
+      "research": "power",
+      "sealedModule": false,
+      "machineOnly": true,
+      "link": false,
+      "size": {
+        "x": 16,
+        "y": 16
+      },
+      "height": 13,
+      "power": 0,
+      "generation": 60,
+      "capacity": 80,
+      "waterCapacity": 0,
+      "buildSeconds": 30,
+      "beds": 0,
+      "seats": 0,
+      "staff": 0,
+      "airSupport": 0,
+      "waterPerDay": 0,
+      "outputPerDay": 0,
+      "profession": 0,
+      "recipe": "",
+      "cost": [
+        {
+          "good": 4,
+          "quantity": 80
+        },
+        {
+          "good": 2,
+          "quantity": 50
+        },
+        {
+          "good": 5,
+          "quantity": 20
+        }
+      ]
+    },
+    {
+      "id": "spaceport",
+      "name": "Spaceport Apron",
+      "category": "Visitors",
+      "description": "Spaceport Apron",
+      "model": "Apron",
+      "research": "visitor",
+      "sealedModule": false,
+      "machineOnly": true,
+      "link": false,
+      "size": {
+        "x": 24,
+        "y": 30
+      },
+      "height": 3,
+      "power": 6,
+      "generation": 0,
+      "capacity": 400,
+      "waterCapacity": 0,
+      "buildSeconds": 30,
+      "beds": 0,
+      "seats": 0,
+      "staff": 0,
+      "airSupport": 0,
+      "waterPerDay": 0,
+      "outputPerDay": 0,
+      "profession": 0,
+      "recipe": "",
+      "cost": [
+        {
+          "good": 4,
+          "quantity": 60
+        },
+        {
+          "good": 2,
+          "quantity": 40
+        },
+        {
+          "good": 5,
+          "quantity": 15
+        }
+      ]
+    },
+    {
+      "id": "atmosphere",
+      "name": "Atmosphere Plant",
+      "category": "Planetary",
+      "description": "Atmosphere Plant",
+      "model": "PowerMachine",
+      "research": "planetary",
+      "sealedModule": false,
+      "machineOnly": true,
+      "link": false,
+      "size": {
+        "x": 24,
+        "y": 24
+      },
+      "height": 22,
+      "power": 25,
+      "generation": 0,
+      "capacity": 160,
+      "waterCapacity": 0,
+      "buildSeconds": 30,
+      "beds": 0,
+      "seats": 0,
+      "staff": 0,
+      "airSupport": 0,
+      "waterPerDay": 20,
+      "outputPerDay": 0,
+      "profession": 0,
+      "recipe": "",
+      "cost": [
+        {
+          "good": 4,
+          "quantity": 120
+        },
+        {
+          "good": 2,
+          "quantity": 80
+        },
+        {
+          "good": 5,
+          "quantity": 40
+        }
+      ]
+    },
+    {
+      "id": "climate",
+      "name": "Climate Array",
+      "category": "Planetary",
+      "description": "Climate Array",
+      "model": "Climate",
+      "research": "planetary",
+      "sealedModule": false,
+      "machineOnly": true,
+      "link": false,
+      "size": {
+        "x": 24,
+        "y": 24
+      },
+      "height": 20,
+      "power": 30,
+      "generation": 0,
+      "capacity": 160,
+      "waterCapacity": 0,
+      "buildSeconds": 30,
+      "beds": 0,
+      "seats": 0,
+      "staff": 0,
+      "airSupport": 0,
+      "waterPerDay": 0,
+      "outputPerDay": 0,
+      "profession": 0,
+      "recipe": "",
+      "cost": [
+        {
+          "good": 4,
+          "quantity": 100
+        },
+        {
+          "good": 2,
+          "quantity": 100
+        },
+        {
+          "good": 5,
+          "quantity": 40
+        }
+      ]
+    },
+    {
+      "id": "biosphere",
+      "name": "Biosphere Processor",
+      "category": "Planetary",
+      "description": "Biosphere Processor",
+      "model": "PowerMachine",
+      "research": "planetary",
+      "sealedModule": false,
+      "machineOnly": true,
+      "link": false,
+      "size": {
+        "x": 24,
+        "y": 24
+      },
+      "height": 18,
+      "power": 20,
+      "generation": 0,
+      "capacity": 160,
+      "waterCapacity": 0,
+      "buildSeconds": 30,
+      "beds": 0,
+      "seats": 0,
+      "staff": 0,
+      "airSupport": 0,
+      "waterPerDay": 20,
+      "outputPerDay": 0,
+      "profession": 0,
+      "recipe": "",
+      "cost": [
+        {
+          "good": 4,
+          "quantity": 120
+        },
+        {
+          "good": 2,
+          "quantity": 80
+        },
+        {
+          "good": 5,
+          "quantity": 30
+        }
+      ]
+    },
+    {
+      "id": "cable",
+      "name": "Power Cable",
+      "category": "Connections",
+      "description": "Power Cable",
+      "model": "Cable",
+      "research": "",
+      "sealedModule": false,
+      "machineOnly": true,
+      "link": true,
+      "size": {
+        "x": 1,
+        "y": 10
+      },
+      "height": 0.4,
+      "power": 0,
+      "generation": 0,
+      "capacity": 0,
+      "waterCapacity": 0,
+      "buildSeconds": 8,
+      "beds": 0,
+      "seats": 0,
+      "staff": 0,
+      "airSupport": 0,
+      "waterPerDay": 0,
+      "outputPerDay": 0,
+      "profession": 0,
+      "recipe": "",
+      "cost": [
+        {
+          "good": 4,
+          "quantity": 1
+        }
+      ]
+    },
+    {
+      "id": "pipe",
+      "name": "Water Pipe",
+      "category": "Connections",
+      "description": "Water Pipe",
+      "model": "Pipe",
+      "research": "",
+      "sealedModule": false,
+      "machineOnly": true,
+      "link": true,
+      "size": {
+        "x": 1,
+        "y": 10
+      },
+      "height": 0.8,
+      "power": 0,
+      "generation": 0,
+      "capacity": 0,
+      "waterCapacity": 0,
+      "buildSeconds": 8,
+      "beds": 0,
+      "seats": 0,
+      "staff": 0,
+      "airSupport": 0,
+      "waterPerDay": 0,
+      "outputPerDay": 0,
+      "profession": 0,
+      "recipe": "",
+      "cost": [
+        {
+          "good": 4,
+          "quantity": 1
+        },
+        {
+          "good": 2,
+          "quantity": 1
+        }
+      ]
+    },
+    {
+      "id": "park",
+      "name": "Scenic Park",
+      "category": "Visitors",
+      "description": "Scenic Park",
+      "model": "Park",
+      "research": "biosphere",
+      "sealedModule": false,
+      "machineOnly": false,
+      "link": false,
+      "size": {
+        "x": 24,
+        "y": 24
+      },
+      "height": 2,
+      "power": 0,
+      "generation": 0,
+      "capacity": 40,
+      "waterCapacity": 0,
+      "buildSeconds": 30,
+      "beds": 0,
+      "seats": 12,
+      "staff": 0,
+      "airSupport": 0,
+      "waterPerDay": 0,
+      "outputPerDay": 0,
+      "profession": 0,
+      "recipe": "",
+      "cost": [
+        {
+          "good": 4,
+          "quantity": 10
+        },
+        {
+          "good": 2,
+          "quantity": 10
+        }
+      ]
+    },
+    {
+      "id": "field",
+      "name": "Outdoor Farm",
+      "category": "Survival",
+      "description": "Outdoor Farm",
+      "model": "Field",
+      "research": "biosphere",
+      "sealedModule": false,
+      "machineOnly": false,
+      "link": false,
+      "size": {
+        "x": 24,
+        "y": 24
+      },
+      "height": 2,
+      "power": 0,
+      "generation": 0,
+      "capacity": 100,
+      "waterCapacity": 0,
+      "buildSeconds": 30,
+      "beds": 0,
+      "seats": 0,
+      "staff": 2,
+      "airSupport": 0,
+      "waterPerDay": 0,
+      "outputPerDay": 45,
+      "profession": 1,
+      "recipe": "",
+      "cost": [
+        {
+          "good": 4,
+          "quantity": 10
+        },
+        {
+          "good": 2,
+          "quantity": 5
+        }
+      ]
+    },
+    {
+      "id": "cargo",
+      "name": "Recoverable Cargo",
+      "category": "Recovery",
+      "description": "Stockyard",
+      "model": "StorageModule",
+      "research": "",
+      "sealedModule": false,
+      "machineOnly": true,
+      "link": false,
+      "size": {
+        "x": 3,
+        "y": 3
+      },
+      "height": 2,
+      "power": 0,
+      "generation": 0,
+      "capacity": 100000,
+      "waterCapacity": 0,
+      "buildSeconds": 30,
+      "beds": 0,
+      "seats": 0,
+      "staff": 0,
+      "airSupport": 0,
+      "waterPerDay": 0,
+      "outputPerDay": 0,
+      "profession": 0,
+      "recipe": "",
+      "cost": []
+    }
+  ],
+  "recipes": [
+    {
+      "id": "smelt",
+      "name": "Smelt Metal",
+      "facility": "smelter",
+      "seconds": 6,
+      "inputs": [
+        {
+          "good": 0,
+          "quantity": 2
+        }
+      ],
+      "outputs": [
+        {
+          "good": 4,
+          "quantity": 1
+        }
+      ],
+      "actor": ""
+    },
+    {
+      "id": "component",
+      "name": "Assemble Component",
+      "facility": "assembler",
+      "seconds": 10,
+      "inputs": [
+        {
+          "good": 4,
+          "quantity": 2
+        },
+        {
+          "good": 1,
+          "quantity": 1
+        }
+      ],
+      "outputs": [
+        {
+          "good": 5,
+          "quantity": 1
+        }
+      ],
+      "actor": ""
+    },
+    {
+      "id": "suit",
+      "name": "Make EVA Suit",
+      "facility": "assembler",
+      "seconds": 30,
+      "inputs": [
+        {
+          "good": 4,
+          "quantity": 6
+        },
+        {
+          "good": 5,
+          "quantity": 2
+        }
+      ],
+      "outputs": [
+        {
+          "good": 9,
+          "quantity": 1
+        }
+      ],
+      "actor": ""
+    },
+    {
+      "id": "toolkit",
+      "name": "Make Civilian Toolkit",
+      "facility": "assembler",
+      "seconds": 20,
+      "inputs": [
+        {
+          "good": 4,
+          "quantity": 2
+        },
+        {
+          "good": 5,
+          "quantity": 1
+        }
+      ],
+      "outputs": [
+        {
+          "good": 10,
+          "quantity": 1
+        }
+      ],
+      "actor": ""
+    },
+    {
+      "id": "medicine",
+      "name": "Fabricate Medicine",
+      "facility": "medicine",
+      "seconds": 15,
+      "inputs": [
+        {
+          "good": 3,
+          "quantity": 2
+        },
+        {
+          "good": 5,
+          "quantity": 1
+        },
+        {
+          "good": 8,
+          "quantity": 1
+        }
+      ],
+      "outputs": [
+        {
+          "good": 7,
+          "quantity": 2
+        }
+      ],
+      "actor": ""
+    },
+    {
+      "id": "workbot",
+      "name": "Build Work Robot",
+      "facility": "robotworks",
+      "seconds": 90,
+      "inputs": [
+        {
+          "good": 4,
+          "quantity": 20
+        },
+        {
+          "good": 5,
+          "quantity": 6
+        }
+      ],
+      "outputs": [],
+      "actor": "WorkRobot"
+    },
+    {
+      "id": "forestrybot",
+      "name": "Build Forestry Bot",
+      "facility": "robotworks",
+      "seconds": 90,
+      "inputs": [
+        {
+          "good": 4,
+          "quantity": 24
+        },
+        {
+          "good": 5,
+          "quantity": 8
+        }
+      ],
+      "outputs": [],
+      "actor": "ForestryBot"
+    },
+    {
+      "id": "drone",
+      "name": "Build Transport Drone",
+      "facility": "robotworks",
+      "seconds": 60,
+      "inputs": [
+        {
+          "good": 4,
+          "quantity": 10
+        },
+        {
+          "good": 5,
+          "quantity": 4
+        }
+      ],
+      "outputs": [],
+      "actor": "Drone"
+    }
+  ],
+  "research": [
+    {
+      "id": "automation",
+      "name": "Efficient Automation",
+      "cost": 60,
+      "prerequisites": [],
+      "description": "20% less mobile energy use and 20% faster machine work."
+    },
+    {
+      "id": "agriculture",
+      "name": "Advanced Agriculture",
+      "cost": 60,
+      "prerequisites": [],
+      "description": "25% more greenhouse output and 20% less growing water."
+    },
+    {
+      "id": "visitor",
+      "name": "Visitor Services",
+      "cost": 100,
+      "prerequisites": [],
+      "description": "Reception, guest lodges, restaurants and attractions."
+    },
+    {
+      "id": "medical",
+      "name": "Medical Development",
+      "cost": 80,
+      "prerequisites": [],
+      "description": "Medicine manufacturing and improved treatment."
+    },
+    {
+      "id": "regions",
+      "name": "Regional Survey",
+      "cost": 80,
+      "prerequisites": [],
+      "description": "Survey and acquire connected neighboring regions."
+    },
+    {
+      "id": "power",
+      "name": "Reliable Power",
+      "cost": 120,
+      "prerequisites": [
+        "automation"
+      ],
+      "description": "Geothermal generation and 25% greater battery capacity."
+    },
+    {
+      "id": "life",
+      "name": "Life-Support Efficiency",
+      "cost": 100,
+      "prerequisites": [
+        "agriculture"
+      ],
+      "description": "20% lower life-support water use and greater air buffering."
+    },
+    {
+      "id": "planetary",
+      "name": "Planetary Engineering",
+      "cost": 200,
+      "prerequisites": [
+        "power",
+        "life",
+        "medical"
+      ],
+      "description": "Atmosphere, climate and biosphere program facilities."
+    },
+    {
+      "id": "civic",
+      "name": "Civic Development",
+      "cost": 150,
+      "prerequisites": [
+        "visitor"
+      ],
+      "description": "25% better hospitality capacity and faster training."
+    },
+    {
+      "id": "biosphere",
+      "name": "Sustainable Biosphere",
+      "cost": 300,
+      "prerequisites": [
+        "planetary",
+        "agriculture"
+      ],
+      "description": "Outdoor parks and fields when conditions permit; higher program efficiency."
+    }
+  ]
+}

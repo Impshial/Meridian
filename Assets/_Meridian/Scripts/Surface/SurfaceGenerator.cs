@@ -47,13 +47,13 @@ namespace Meridian
         }
 
         public static SurfaceWorldData Generate(PlanetData planet,Vector3 selectedDirection,SurfaceParameters parameters,CancellationToken cancellation=default,
-            SurfaceLoadProgress progress=null,int workerCount=0)
+            SurfaceLoadProgress progress=null,int workerCount=0,ColonySetupRecord saved=null)
         {
             if(planet==null)throw new ArgumentNullException(nameof(planet));
             if(selectedDirection.sqrMagnitude<.5f)throw new ArgumentException("A selected geographic direction is required.");
             cancellation.ThrowIfCancellationRequested();var timer=Stopwatch.StartNew();
-            var world=new SurfaceWorldData(planet,new SurfaceFrame(selectedDirection,parameters.mappingRadius),parameters);
-            FindPlain(world,cancellation);
+            var world=new SurfaceWorldData(planet,saved!=null?saved.surfaceFrame:new SurfaceFrame(selectedDirection,parameters.mappingRadius),parameters);
+            if(saved!=null){world.PlainCentre=saved.plainCentre;world.PlainHeight=saved.plainHeight;world.ShapePlain=saved.shapePlain;}else FindPlain(world,cancellation);
             progress?.Report(.02f,"Surveying buildable ground");
             int workers=workerCount>0?Math.Min(workerCount,4):Math.Max(1,Math.Min(4,Environment.ProcessorCount-2));
             var parallel=new ParallelOptions {CancellationToken=cancellation,MaxDegreeOfParallelism=workers};
@@ -222,7 +222,7 @@ namespace Meridian
             var tile=new SurfaceTileData {Address=address,Origin=world.TileOrigin(address),Size=p.tileSize,
                 MinHeight=p.minimumTerrainHeight,HeightRange=p.terrainHeightRange,Heights=new float[resolution,resolution]};
             // Integer logical sample coordinates make both copies of a shared border bit-identical.
-            int waterResolution=segments/2+1;var waterSamples=new SurfaceSample[waterResolution,waterResolution];
+            int waterResolution=segments/2+1;var waterSamples=new SurfaceSample[waterResolution,waterResolution];tile.WaterClearance=new float[waterResolution,waterResolution];
             for(int z=0;z<resolution;z++)
             {
                 token.ThrowIfCancellationRequested();
@@ -230,7 +230,7 @@ namespace Meridian
                 {
                     float wx=(address.x*segments+x)*step-world.TileOriginOffset,wz=(address.y*segments+z)*step-world.TileOriginOffset;
                     SurfaceSample sample=Sample(world,wx,wz);tile.Heights[z,x]=(sample.Height-p.minimumTerrainHeight)/p.terrainHeightRange;
-                    if((x&1)==0 && (z&1)==0)waterSamples[z/2,x/2]=sample;
+                    if((x&1)==0 && (z&1)==0){waterSamples[z/2,x/2]=sample;tile.WaterClearance[z/2,x/2]=sample.WaterDistance;}
                 }
             }
             int alpha=p.alphamapResolution;tile.Layers=new float[alpha,alpha,5];

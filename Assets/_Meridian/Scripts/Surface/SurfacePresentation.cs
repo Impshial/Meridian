@@ -50,6 +50,7 @@ namespace Meridian
             }
         }
         public void Ready(){group.alpha=1;}
+        public void HideForColony(){if(root)root.gameObject.SetActive(false);}
         public void SetInteraction(bool enabled,bool confirm)
         {group.interactable=enabled;group.blocksRaycasts=enabled;BackButton.interactable=enabled;LandButton.interactable=enabled&&confirm;}
         public void SetPlacement(bool locked,bool valid,bool confirmed,string reason)

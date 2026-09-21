@@ -16,10 +16,13 @@ namespace Meridian
         private Rect bounds;
         private Func<float,float,float> height;
         private Func<Vector2,bool> overUI;
+        private Func<Vector3,float,bool> canFrame;
+        private Func<Vector3,float,Vector3> nearestFrame;
         private Vector3 pivot,initialPivot;
         private float distance,targetDistance,yaw=-25,targetYaw=-25,pitch=57,targetPitch=57;
         private bool enabledInput,middleCapture,focused=true;
         private Vector2 previousPointer;
+        private Func<bool> keyboardBlocked;public float Sensitivity=1,ZoomSensitivity=1,TiltSensitivity=1;public bool EdgePan;
         public Camera Lens=>lens;
         public Vector3 Pivot=>pivot;
         public float Heading=>Mathf.Repeat(yaw,360);
@@ -28,6 +31,14 @@ namespace Meridian
         public bool IsPanning=>middleCapture;
         // Kept for the placement controller: any captured camera gesture suspends hover positioning.
         public bool IsOrbiting=>middleCapture;
+        public void ConfigureColony(Rect area,Func<float,float,float> terrainHeight,Func<Vector2,bool> uiTest,Func<bool> textFocus,Func<Vector3,float,bool> ownership=null,Func<Vector3,float,Vector3> nearest=null)
+        {bounds=area;height=terrainHeight;overUI=uiTest;keyboardBlocked=textFocus;canFrame=ownership;nearestFrame=nearest;minimumDistance=28;initialDistance=240;lens.nearClipPlane=.4f;}
+        public void SetBounds(Rect area){bounds=area;}
+        public void SetHome(Vector3 point){initialPivot=point;}
+        public void Focus(Vector3 point){pivot=point;ApplyPose();}
+        public Colony.CameraState Capture()=>new Colony.CameraState{pivot=pivot,yaw=yaw,pitch=pitch,distance=distance};
+        public void Restore(Colony.CameraState state)
+        {pivot=state.pivot;yaw=targetYaw=state.yaw;pitch=targetPitch=Mathf.Clamp(state.pitch,minimumPitch,maximumPitch);distance=targetDistance=Mathf.Clamp(state.distance,minimumDistance,maximumDistance);middleCapture=false;ApplyPose();}
 
         public void Initialize(Camera camera,Rect area,Vector3 focus,Func<float,float,float> terrainHeight,Func<Vector2,bool> uiTest)
         {
@@ -51,7 +62,7 @@ namespace Meridian
         {
             if(!lens || height==null)return;
             var mouse=Mouse.current;var keyboard=Keyboard.current;
-            if(enabledInput && focused)
+            if(enabledInput && focused && !(keyboardBlocked?.Invoke()??false))
             {
                 bool ui=mouse!=null && (overUI?.Invoke(mouse.position.ReadValue())??false);
                 if(mouse!=null)
@@ -64,7 +75,7 @@ namespace Meridian
                         // A fixed screen scale avoids the sideways perspective drift of off-centre plane grabs.
                         float metresPerPixel=2*distance*Mathf.Tan(lens.fieldOfView*.5f*Mathf.Deg2Rad)/Mathf.Max(1,lens.pixelHeight);
                         float verticalScale=1/Mathf.Max(.1f,-lens.transform.forward.y);
-                        Pan(ScreenMotion(new Vector2(-delta.x,-delta.y*verticalScale))*metresPerPixel);
+                        Pan(ScreenMotion(new Vector2(-delta.x,-delta.y*verticalScale))*metresPerPixel*Sensitivity);
                     }
                     previousPointer=point;
                     if(!mouse.middleButton.isPressed)middleCapture=false;
@@ -78,10 +89,10 @@ namespace Meridian
                             ticks=Mathf.Clamp(ticks,-20,20);
                             bool zoom=keyboard!=null && (keyboard.leftShiftKey.isPressed || keyboard.rightShiftKey.isPressed);
                             if(zoom)
-                                targetDistance=Mathf.Clamp(targetDistance*Mathf.Exp(-ticks*zoomPerTick),
+                                targetDistance=Mathf.Clamp(targetDistance*Mathf.Exp(-ticks*zoomPerTick*ZoomSensitivity),
                                     Mathf.Min(minimumDistance,SupportedDistance()),SupportedDistance());
                             else
-                                targetPitch=Mathf.Clamp(targetPitch+ticks*tiltPerTick,minimumPitch,maximumPitch);
+                                targetPitch=Mathf.Clamp(targetPitch+ticks*tiltPerTick*TiltSensitivity,minimumPitch,maximumPitch);
                         }
                     }
                 }
@@ -97,8 +108,10 @@ namespace Meridian
                     float x=(keyboard.dKey.isPressed||keyboard.rightArrowKey.isPressed?1:0)-(keyboard.aKey.isPressed||keyboard.leftArrowKey.isPressed?1:0);
                     float z=(keyboard.wKey.isPressed||keyboard.upArrowKey.isPressed?1:0)-(keyboard.sKey.isPressed||keyboard.downArrowKey.isPressed?1:0);
                     Vector3 motion=ScreenMotion(Vector2.ClampMagnitude(new Vector2(x,z),1));
-                    Pan(motion*(distance*panRate*Mathf.Min(.05f,Time.unscaledDeltaTime)));
+                    Pan(motion*(distance*panRate*Sensitivity*Mathf.Min(.05f,Time.unscaledDeltaTime)));
                 }
+                if(EdgePan&&mouse!=null&&!ui&&!middleCapture)
+                {var p=mouse.position.ReadValue();var edge=new Vector2(p.x<4?-1:p.x>Screen.width-4?1:0,p.y<4?-1:p.y>Screen.height-4?1:0);Pan(ScreenMotion(edge)*distance*panRate*Sensitivity*Mathf.Min(.05f,Time.unscaledDeltaTime));}
             }
             distance=Mathf.Lerp(distance,targetDistance,1-Mathf.Exp(-10*Time.unscaledDeltaTime));
             pitch=Mathf.Lerp(pitch,targetPitch,1-Mathf.Exp(-tiltSmoothing*Time.unscaledDeltaTime));
@@ -130,7 +143,10 @@ namespace Meridian
             if(movement.z>0)fraction=Mathf.Min(fraction,(bounds.yMax-inset-pivot.z)/movement.z);
             else if(movement.z<0)fraction=Mathf.Min(fraction,(bounds.yMin+inset-pivot.z)/movement.z);
             // Clip the entire requested segment. Independent X/Z clamps slide along oblique map edges.
-            pivot+=movement*Mathf.Clamp01(fraction);
+            fraction=Mathf.Clamp01(fraction);
+            if(canFrame!=null&&!canFrame(pivot+movement*fraction,inset))
+            {float lo=0,hi=fraction;for(int i=0;i<20;i++){float mid=(lo+hi)*.5f;if(canFrame(pivot+movement*mid,inset))lo=mid;else hi=mid;}fraction=lo;}
+            pivot+=movement*fraction;
         }
         float SupportedDistance()
         {
@@ -143,6 +159,13 @@ namespace Meridian
         {
             Quaternion orientation=Quaternion.Euler(pitch,yaw,0);
             targetDistance=Mathf.Min(targetDistance,SupportedDistance());distance=Mathf.Min(distance,SupportedDistance());
+            if(canFrame!=null)
+            {
+                float minimumInset=70+GroundRadius()*minimumDistance;
+                if(!canFrame(pivot,minimumInset)&&nearestFrame!=null)pivot=nearestFrame(pivot,minimumInset);
+                if(!canFrame(pivot,70+GroundRadius()*distance))
+                {float lo=minimumDistance,hi=distance;for(int i=0;i<20;i++){float mid=(lo+hi)*.5f;if(canFrame(pivot,70+GroundRadius()*mid))lo=mid;else hi=mid;}distance=lo;targetDistance=Mathf.Min(targetDistance,lo);}
+            }
             float safeDistance=distance;
             // This inset depends on zoom/aspect, never on the current pitch or heading. A point reached
             // overhead remains valid when tilting or turning at an edge, so ApplyPose cannot relocate it.

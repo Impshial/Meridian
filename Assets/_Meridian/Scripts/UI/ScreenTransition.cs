@@ -86,9 +86,10 @@ namespace Meridian
         {
             (loadingDestination as ISetupLoading)?.CancelLoading();
             failed=true;recovering=false;recovery.interactable=true;overlay.alpha=1;presentation.alpha=1;
-            bool hasPlanet=SceneManager.GetActiveScene().name!="PlanetSelection" && SetupSession.Current && SetupSession.Current.Planet!=null;
+            bool restoring=SetupSession.Current && SetupSession.Current.LandingConfirmed;
+            bool hasPlanet=!restoring && SceneManager.GetActiveScene().name!="PlanetSelection" && SetupSession.Current && SetupSession.Current.Planet!=null;
             recoveryScene=hasPlanet?"PlanetSelection":"MainMenu";
-            message.text=hasPlanet?"Survey unavailable":"Unable to load planet";
+            message.text=restoring?"Unable to restore colony":hasPlanet?"Survey unavailable":"Unable to load planet";
             details.text=reason;details.gameObject.SetActive(true);indicator.gameObject.SetActive(false);
             recovery.GetComponentInChildren<TMP_Text>().text=hasPlanet?"BACK TO PLANET":"RETURN TO MENU";
             recovery.gameObject.SetActive(true);
@@ -131,7 +132,8 @@ namespace Meridian
                 int percent=Mathf.FloorToInt(state.Fraction*100);
                 details.text=$"{state.Detail}  ({percent}%)";details.gameObject.SetActive(true);
                 if(percent/10>loggedProgress){loggedProgress=percent/10;Debug.Log($"Meridian loading: {details.text}; {now-loadingStarted:F1}s elapsed.");}
-                recoveryScene="PlanetSelection";recovery.GetComponentInChildren<TMP_Text>().text="BACK TO PLANET";
+                bool restoring=SetupSession.Current && SetupSession.Current.LandingConfirmed;
+                recoveryScene=restoring?"MainMenu":"PlanetSelection";recovery.GetComponentInChildren<TMP_Text>().text=restoring?"RETURN TO MENU":"BACK TO PLANET";
                 recovery.interactable=true;recovery.gameObject.SetActive(true);
             }
         }

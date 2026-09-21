@@ -36,6 +36,9 @@ namespace Meridian
         public SurfaceWorldData World {get;private set;}
         public SurveyCamera Viewing=>surveyCamera;
         public DropshipPreview Preview=>preview;
+        public SurfaceLandscape Landscape=>landscape;
+        public ScreenTransition Transition=>transitionPrefab;
+        private Colony.ColonyRuntime colony;
         public bool CandidateLocked=>locked;
         public PlacementResult CurrentPlacement=>placement;
 
@@ -73,6 +76,8 @@ namespace Meridian
                 Debug.Log($"Meridian survey numerical data ready: {World.GenerationSeconds:F2}s.");
             }
             landscape=new GameObject("Generated Surface Landscape").AddComponent<SurfaceLandscape>();landscape.transform.SetParent(transform,false);
+            if(Colony.ColonyLoadPipeline.PendingState!=null)
+            {var removed=new HashSet<string>();foreach(var item in Colony.ColonyLoadPipeline.PendingState.resources)if(item.removed)removed.Add(item.id);landscape.SetRemovalQuery(removed.Contains);}
             // Catch nested coroutine errors as well as generation errors: never leave an overlay waiting forever.
             var stack=new Stack<IEnumerator>();stack.Push(landscape.Build(World,terrainMaterial,waterMaterial,loadingProgress));
             while(stack.Count>0)
@@ -100,6 +105,12 @@ namespace Meridian
             while(UnityEditor.ShaderUtil.anythingCompiling)yield return null;
 #endif
             if(token.IsCancellationRequested || !session || revision!=session.RegionRevision)yield break;
+            if(Colony.ColonyLoadPipeline.PendingState!=null)
+            {
+                try{var restored=Colony.ColonyLoadPipeline.TakeState(out var extra);EnterColony(restored,extra);}
+                catch(Exception error){Fail("The colony view could not be restored. Return to the menu and try its backup.",error);}
+            }
+            if(GenerationFailed)yield break;
             IsReady=true;UpdatePresentation();
             loadingProgress.Report(1,"Survey ready");
             Debug.Log($"Meridian landing survey ready: seed {World.Seed}, {World.Version}, {World.Tiles.Length} tiles, {World.Parameters.heightmapResolution} heights/tile, {World.BuildableArea:F0} m² connected buildable area, {World.GenerationSeconds:F2}s numeric generation.");
@@ -124,6 +135,7 @@ namespace Meridian
         }
         public void SetInteraction(bool enabled)
         {
+            if(colony){interaction=enabled;colony.SetInteraction(enabled);return;}
             interaction=enabled;gesture.Reset();if(surveyCamera)surveyCamera.SetInteraction(enabled);
             if(presentation)presentation.SetInteraction(enabled,locked&&placement.Valid&&!confirmed);
             if(!enabled)ClickPulse.Clear();
@@ -134,18 +146,19 @@ namespace Meridian
         }
         public void BackToPlanet()
         {
-            if(!IsReady || !interaction || ScreenTransition.Active)return;
+            if(colony||!IsReady || !interaction || ScreenTransition.Active)return;
             SetInteraction(false);ScreenTransition.Travel(transitionPrefab,"PlanetSelection","Returning to Exo-planet...");
         }
         public void ConfirmLanding()
         {
             if(!IsReady || !interaction || !locked || confirmed || ScreenTransition.Active)return;
             placement=LandingPlacement.Evaluate(World,previewPosition,heading);
-            if(placement.Valid){session.ConfirmLanding(placement.Candidate);confirmed=true;}
+            if(placement.Valid){session.ConfirmLanding(placement.Candidate);confirmed=true;try{EnterColony(null,null);}catch(Exception error){Fail("The colony could not start. Return to the menu and try again; see the log for details.",error);}return;}
             ShowPreview();UpdatePresentation();
         }
         void Update()
         {
+            if(colony)return;
             if(!IsReady)return;
             presentation.UpdateMarkers(surveyCamera.Lens,landscape);
             if(!interaction || confirmed)return;
@@ -197,6 +210,11 @@ namespace Meridian
         }
         void ClearCandidate()
         {if(confirmed)return;locked=false;session.SetCandidate(null);gesture.Reset();UpdatePresentation();}
+        void EnterColony(Colony.ColonyState loaded,SurfaceTileData[] extra)
+        {
+            confirmed=true;gesture.Reset();preview.Hide();presentation.HideForColony();
+            colony=gameObject.AddComponent<Colony.ColonyRuntime>();colony.Initialize(this,loaded,extra);colony.SetInteraction(interaction);
+        }
         void EvaluatePreview()
         {nextEvaluation=Time.unscaledTime+.09f;placement=LandingPlacement.Evaluate(World,previewPosition,heading);ShowPreview();UpdatePresentation();}
         void ShowPreview()
