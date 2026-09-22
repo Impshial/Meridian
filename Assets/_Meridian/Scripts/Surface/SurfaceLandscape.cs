@@ -20,7 +20,7 @@ namespace Meridian
         readonly Dictionary<Vector2Int,SurfaceTileData> numerical=new Dictionary<Vector2Int,SurfaceTileData>();
         readonly HashSet<Vector3Int> dirtyProps=new HashSet<Vector3Int>();
         TerrainLayer[] layers;Material ground,water;Func<string,bool> removed;
-        bool synchronizing;public int TerrainCount=>terrains.Count;public int PropBatchCount=>propViews.Count;
+        bool synchronizing,surfaceVisible=true;public int TerrainCount=>terrains.Count;public int PropBatchCount=>propViews.Count;
         public IReadOnlyList<TerrainCollider> Colliders=>colliders;
         public IEnumerator Build(SurfaceWorldData world,Material terrainMaterial,Material waterMaterial,SurfaceLoadProgress progress=null)
         {
@@ -44,6 +44,12 @@ namespace Meridian
                     if(item.Kind==SurfaceObjectKind.Tree){key.z=5;if(!propSources.TryGetValue(key,out list)){list=new List<SurfaceObjectData>();propSources.Add(key,list);}list.Add(item);dirtyProps.Add(key);}
                 }
             }
+        }
+        public void SetSurfaceVisible(bool value)
+        {
+            surfaceVisible=value;
+            foreach(var view in terrains.Values){view.terrain.drawHeightmap=value;if(view.water)view.water.SetActive(value);}
+            foreach(var view in propViews.Values)view.SetActive(value);
         }
         public void SetRemovalQuery(Func<string,bool> query,bool refreshExisting=true){removed=query;if(refreshExisting)foreach(var key in propViews.Keys)dirtyProps.Add(key);}
         public void ResourceChanged(SurfaceObjectData item){if(item==null)return;var key=Key(item);dirtyProps.Add(key);if(item.Kind==SurfaceObjectKind.Tree){key.z=5;dirtyProps.Add(key);}}
@@ -70,12 +76,12 @@ namespace Meridian
             var data=Own(new TerrainData{name=$"Meridian Terrain {tile.Address.x},{tile.Address.y}",heightmapResolution=tile.Heights.GetLength(0),alphamapResolution=tile.Layers.GetLength(0),baseMapResolution=512,size=new Vector3(tile.Size,tile.HeightRange,tile.Size)});
             data.terrainLayers=layers;data.SetHeights(0,0,tile.Heights);yield return null;data.SetAlphamaps(0,0,tile.Layers);
             var go=Terrain.CreateTerrainGameObject(data);go.name=data.name;go.transform.SetParent(transform,false);go.transform.localPosition=new Vector3(tile.Origin.x,tile.MinHeight,tile.Origin.y);
-            var terrain=go.GetComponent<Terrain>();terrain.materialTemplate=ground;terrain.heightmapPixelError=3;terrain.basemapDistance=2000;terrain.drawInstanced=true;terrain.allowAutoConnect=false;terrain.shadowCastingMode=ShadowCastingMode.On;terrain.Flush();
+            var terrain=go.GetComponent<Terrain>();terrain.drawHeightmap=surfaceVisible;terrain.materialTemplate=ground;terrain.heightmapPixelError=3;terrain.basemapDistance=2000;terrain.drawInstanced=true;terrain.allowAutoConnect=false;terrain.shadowCastingMode=ShadowCastingMode.On;terrain.Flush();
             var view=new TileView{terrain=terrain,data=data};terrains.Add(tile.Address,view);colliders.Add(go.GetComponent<TerrainCollider>());
             if(tile.Water!=null&&tile.Water.Vertices.Length>0)
             {
                 var mesh=Own(new Mesh{name="Surface water "+tile.Address,indexFormat=IndexFormat.UInt32});mesh.vertices=tile.Water.Vertices;mesh.triangles=tile.Water.Triangles;mesh.RecalculateNormals();mesh.RecalculateBounds();
-                var waterObject=new GameObject(mesh.name,typeof(MeshFilter),typeof(MeshRenderer));waterObject.transform.SetParent(transform,false);waterObject.GetComponent<MeshFilter>().sharedMesh=mesh;var renderer=waterObject.GetComponent<MeshRenderer>();renderer.sharedMaterial=water;renderer.shadowCastingMode=ShadowCastingMode.Off;renderer.receiveShadows=true;view.mesh=mesh;view.water=waterObject;
+                var waterObject=new GameObject(mesh.name,typeof(MeshFilter),typeof(MeshRenderer));waterObject.transform.SetParent(transform,false);waterObject.GetComponent<MeshFilter>().sharedMesh=mesh;var renderer=waterObject.GetComponent<MeshRenderer>();renderer.sharedMaterial=water;renderer.shadowCastingMode=ShadowCastingMode.Off;renderer.receiveShadows=true;view.mesh=mesh;view.water=waterObject;waterObject.SetActive(surfaceVisible);
             }
             yield return null;
         }
@@ -105,7 +111,7 @@ namespace Meridian
             }
             if(geometry.Vertices.Count==0)return;
             var mesh=Own(new Mesh{name="Surface resource batch "+key,indexFormat=IndexFormat.UInt32});mesh.SetVertices(geometry.Vertices);mesh.SetTriangles(geometry.Triangles,0);mesh.RecalculateNormals();mesh.RecalculateBounds();
-            var go=new GameObject(mesh.name,typeof(MeshFilter),typeof(MeshRenderer));go.transform.SetParent(transform,false);go.GetComponent<MeshFilter>().sharedMesh=mesh;go.GetComponent<MeshRenderer>().sharedMaterial=propMaterials[key.z];go.GetComponent<MeshRenderer>().shadowCastingMode=ShadowCastingMode.On;propViews.Add(key,go);
+            var go=new GameObject(mesh.name,typeof(MeshFilter),typeof(MeshRenderer));go.transform.SetParent(transform,false);go.GetComponent<MeshFilter>().sharedMesh=mesh;go.GetComponent<MeshRenderer>().sharedMaterial=propMaterials[key.z];go.GetComponent<MeshRenderer>().shadowCastingMode=ShadowCastingMode.On;propViews.Add(key,go);go.SetActive(surfaceVisible);
         }
         void RemoveProp(Vector3Int key){if(!propViews.TryGetValue(key,out var go))return;Release(go.GetComponent<MeshFilter>().sharedMesh);Destroy(go);propViews.Remove(key);}
         T Own<T>(T resource)where T:UnityEngine.Object{owned.Add(resource);return resource;}

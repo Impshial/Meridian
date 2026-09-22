@@ -10,7 +10,7 @@ namespace Meridian.Colony
         public ColonyIndustry(ColonySimulation owner){sim=owner;}
         void Plan()
         {
-            foreach(var b in sim.State.structures.Where(b=>b.phase==BuildPhase.Complete&&b.enabled&&!b.paused))
+            foreach(var b in sim.State.structures.Where(b=>b.phase==BuildPhase.Complete&&b.enabled&&!b.paused&&b.definition!="cargo"))
             {
                 var recipe=sim.Catalog.Recipe(b.recipe);if(recipe!=null)
                     foreach(var input in recipe.inputs)sim.Jobs.Supply(b,input.good,Mathf.Max(input.quantity*4,10),b.priority+1);
@@ -19,7 +19,7 @@ namespace Meridian.Colony
                 var inventory=sim.Stock.Get(b.inventory);
                 foreach(var item in inventory.items.ToArray())
                 {
-                    bool output=b.definition=="cargo"||b.definition=="miner"||b.definition=="quarry"||b.definition=="ice"||((b.definition=="greenhouse"||b.definition=="field")&&item.good==Good.Food)||recipe!=null&&recipe.outputs.Any(o=>o.good==item.good);
+                    bool output=b.definition=="miner"||b.definition=="quarry"||b.definition=="ice"||((b.definition=="greenhouse"||b.definition=="field")&&item.good==Good.Food)||recipe!=null&&recipe.outputs.Any(o=>o.good==item.good);
                     if(!output||sim.Stock.Available(inventory,item.good)<10)continue;
                     var destination=sim.Jobs.StorageFor(item.good,b.position,inventory.id);var target=sim.Structure(destination?.owner);if(target!=null)sim.Jobs.Supply(target,item.good,Mathf.Min(sim.Stock.Count(destination,item.good)+sim.Stock.Available(inventory,item.good),sim.Stock.Count(destination,item.good)+60),b.priority,destination);
                 }

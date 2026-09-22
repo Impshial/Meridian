@@ -68,7 +68,7 @@ namespace Meridian.Editor
                 var sim=game.Simulation;sim.State.windows.Clear();ColonySettings.Current.uiScale=1;
                 var person=sim.SurfaceActors.First(a=>a.kind==ActorKind.Colonist);var forestry=sim.SurfaceActors.First(a=>a.kind==ActorKind.ForestryBot);var habitat=sim.State.structures.First(b=>b.definition=="habitat");
                 var miner=sim.State.structures.FirstOrDefault(b=>b.definition=="miner");if(miner==null){var ore=sim.World.Objects.First(o=>o.Kind==SurfaceObjectKind.Iron);miner=sim.AddStructure("miner",sim.World.Ground(ore.Position),0,true);miner.deposit=ore.Id;}
-                var flight=sim.State.flights.First();foreach(var id in new[]{person.id,forestry.id,miner.id,habitat.id,flight.id})game.UI.Inspect(id);
+                var flight=sim.State.flights.First();foreach(var id in new[]{person.id,forestry.id,miner.id,habitat.id,flight.id}){game.UI.Inspect(id);sim.State.windows.Find(w=>w.key==id).pinned=true;}
                 Require(sim.State.windows.Count(w=>w.open)==5,"Inspector identity duplication");var window=sim.State.windows.First();foreach(var other in sim.State.windows.Skip(1))other.open=false;
                 window.rect=new Vector4(350,180,480,620);window.dock=0;await Task.Delay(500);
                 var pivot=game.Camera.Pivot;await UIDrag(new Vector2(430,200),new Vector2(530,250));

@@ -16,9 +16,12 @@ Starting cargo is 600 Metal, 500 Minerals, 180 Components, 120 Biomass, 160 Iron
 | Wheel | Tilt |
 | Shift + wheel / + / − | Zoom |
 | Q / E | Smooth accumulated 45° turns |
+| Right drag | Smooth continuous heading rotation (no tilt or pan) |
+| U / HUD Layer button | Surface → Underground → Overlay |
 | Home / F | Reset / focus selected object |
 | Left click | Select or designate current tool |
-| Right click / Esc | Cancel tool; close a window; open pause menu |
+| Right click | Cancel the active tool (release without dragging) |
+| Esc | Cancel tool; close a window; open pause menu |
 | R / Shift+R | Rotate construction preview |
 | B / H | Build browser / harvesting designation |
 | Space / 1 / 2 / 3 | Pause / 1× / 2× / 4× time |
@@ -32,7 +35,7 @@ Use Build to designate foundations. Bots clear resources through the same finite
 
 Establish solar/wind power with a battery, a well and tank, an air processor, two connected habitats, a canteen and two greenhouses. Add a clinic, sanitation, lounge and laboratory, plus charging/storage and an airlock. The guide panel observes these actual milestones. A twelve-person opening with three botanists has passed a six-day survival/food test using real robot construction and the starting stock.
 
-Orbit lists sleeping colonists. Choose up to six people per 100-credit transport, nominally one day. Beds are reserved on authorization; ships hold if the reserved accommodation loses safe access. Recruitment delivers to orbit first and requires a later surface flight.
+Open **Orbit** on the bottom toolbar, select up to six sleeping colonists, then use **Request personnel dropship** above the roster and confirm. Each trip costs 100 credits and takes nominally one colony day (120 simulation seconds, plus landing). Resume time with Space. Launch requires enough operational habitat beds and a pressurized corridor route from the arrival apron to the habitat, with powered life support. Keep food and water supplied. Beds are reserved on authorization; ships hold if the reserved accommodation loses safe access. Recruitment delivers to orbit first and requires a later surface flight.
 
 Greenhouses use physical tending visits, piped water and delivered biomass. Their bounded, saved tending reserve allows crops to grow between visits. At default skill, 18 seconds of tending supports one botanist-day of growing activity; the reserve holds at most two botanist-days. A fully supported greenhouse produces up to 30 Food/day before research. People consume two Food and two Water/day. Keep harvesting biomass and replenish industrial inputs as the initial supplies run out.
 
@@ -40,7 +43,7 @@ Builders with suits/toolkits can contribute to civilian sites using an operation
 
 ## Inspection and management
 
-Click objects to open independent inspectors. Windows can float, move, resize, dock at four edges, share dock tabs, resize dock splits, and return to floating. Layout and entity bindings belong to the saved colony. Frames reveals dome interiors and covered corridors; a local override affects only that structure. The master control resets local overrides. Roof visibility never changes air, collision, construction or route state.
+Click objects to reuse one floating inspector. **Pin** preserves an inspector while selecting other objects. **Dock** is explicit and also pins the window; newly selected objects never inherit docking. Dock tabs use readable pages instead of shrinking indefinitely. Older saves have their accumulated entity tabs collapsed to one floating inspector on first load. Windows can float, move, resize, dock at four edges, share dock tabs, resize dock splits, and return to floating. Layout and entity bindings belong to the saved colony. Frames reveals dome interiors and covered corridors; a local override affects only that structure. The master control resets local overrides. Roof visibility never changes air, collision, construction or route state.
 
 Drag a title to move a window and an edge/corner to resize. Drag to a highlighted screen edge to dock, or drag a dock tab back into the play area to undock. Reopening an object raises its existing inspector. Open terrain has a region inspector; Regions includes an ownership map and adjacent acquisition controls.
 
@@ -48,13 +51,13 @@ A staffed training center changes professions through actual attendance. The ini
 
 Inspect buildings for material delivery, condition, utility connections, actual storage and reservations, staffing capacity, production recipes and targets, and lifecycle operations. Inspect people for needs, skills, equipment and histories. Machines expose charge, condition, cargo and current work. Resource inspectors show persistent reserves and designations. Paused orders keep owned cargo; cancelled orders release claims while keeping physical goods recoverable.
 
-Demolition recovers unconsumed inventory and 60% of incorporated construction cost as physical cargo. Replacement dismantles the old machine and creates a paid new construction order on the same deposit. It does not refill the deposit. Production commits inputs once and waits for output space when full.
+Demolition recovers unconsumed inventory and 60% of incorporated construction cost as physical cargo. Machines automatically haul every remaining quantity to accepting storage, including fractional leftovers; empty piles disappear. Storage also lists recovered piles, including any obscured by buildings. The recovered-material inspector offers **Prioritize collection** and a confirmed **Discard remaining materials** action. Discard destroys only supplies still at the pile, releases uncollected reservations, and keeps already-loaded carrier cargo and delivery jobs. Full or filtered storage keeps materials in place with an explanation. Replacement dismantles the old machine and creates a paid new construction order on the same deposit. It does not refill the deposit. Production commits inputs once and waits for output space when full.
 
 ## Development
 
 Research spends points earned by scientists. Trade has finite 200-unit freight manifests, actual cargo handling, paid imports and departure-based export payment. Visitors need suitable beds, sealed access and staffed services, carry finite wallets, consume colony supplies and leave on transports. Reputation combines visitor satisfaction (50%), resident wellbeing (20%), safety (20%) and attraction variety (10%).
 
-Power, water and sealed-air networks are separate. Air reserves and stored battery kWh are finite. Isolation disconnects routes and supply; reconnection preserves quantities. Maintenance requires material and labor. Weather and scheduled events use saved random state.
+Power, water and sealed-air networks are separate. Power cables and water pipes, including building service ports, sit 3 metres below the local terrain. **Surface** hides them, **Underground** hides terrain and trees over a survey grid while retaining building context, and **Overlay** reveals buried services through the surface. Amber cubes mark power ports; blue spheres mark water ports. U or the top-right Layer button cycles views; Utilities also offers direct view selection. Choosing a utility construction tool automatically reveals the overlay. Click facility ports or the facility itself to connect; visible utility lines can be selected for inspection and dismantling. Buried links do not clear trees or obstruct surface foundations or walking; sealed corridors and their passenger doorways stay above ground. Existing saved networks are lowered on reconstruction without changing inventories, topology, paid cost or construction progress. Air reserves and stored battery kWh are finite. Isolation disconnects routes and supply; reconnection preserves quantities. Maintenance requires material and labor. Weather and scheduled events use saved random state.
 
 The coordinated planetary program uses actual power, material and water support plus 2,000 credits per active program year. Default branch work rates are 1.4/year with a hard cap of two; nominal longest branch is about 71 years when continuously supported. Outdoor access requires atmosphere/climate suitability of 80; outdoor farming additionally requires soil suitability of 80. Completion leaves the colony playable.
 

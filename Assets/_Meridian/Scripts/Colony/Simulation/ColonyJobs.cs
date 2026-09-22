@@ -55,11 +55,35 @@ namespace Meridian.Colony
             }
         }
         public bool Storage(StructureState b)=>b.definition=="ship"||b.definition=="stockyard"||b.definition=="warehouse"||b.definition=="tank";
+        public void CollectCargo(StructureState pile,bool prioritize=false)
+        {
+            if(pile.definition!="cargo"||pile.phase==BuildPhase.Removed)return;
+            var source=sim.Stock.Get(pile.inventory);
+            if(prioritize){pile.priority=10;foreach(var j in sim.State.jobs.Where(j=>Active(j)&&j.source==source.id))j.priority=10;}
+            // A loaded carrier owns its cargo independently of the now-empty pile.
+            if(sim.Stock.Used(source)<=.0001f)
+            {pile.phase=BuildPhase.Removed;pile.blocker="Materials collected";sim.Notify(pile.id);return;}
+            bool noSpace=false;int planned=0;
+            foreach(var good in source.items.Select(i=>i.good).Distinct().ToArray())
+            {
+                while(sim.Stock.Available(source,good)>.0001f&&planned<8)
+                {
+                    var destination=StorageFor(good,pile.position,source.id);
+                    if(destination==null){noSpace=true;break;}
+                    float amount=Mathf.Min(60,sim.Stock.Available(source,good),sim.Stock.Free(destination,good));
+                    var job=Create(JobKind.Haul,destination.owner,pile.priority,true);
+                    job.source=source.id;job.destination=destination.id;job.good=good;job.quantity=amount;
+                    if(!sim.Stock.Reserve(job.id,source,destination,good,amount)){sim.State.jobs.Remove(job);break;}
+                    planned++;
+                }
+            }
+            pile.blocker=noSpace?"Storage full or filtered: add space for the remaining materials":"Collection queued · machines will haul materials to storage";
+        }
         public InventoryState StorageFor(Good good,Vector3 position,string except=null)
         {
             return sim.State.structures.Where(b=>b.phase==BuildPhase.Complete&&b.enabled&&!b.paused&&Storage(b))
                 .SelectMany(b=>new[]{sim.Stock.Get(b.inventory),sim.Stock.Get(b.waterInventory)})
-                .Where(i=>i!=null&&i.id!=except&&sim.Stock.Free(i,good)>.01f).OrderBy(i=>Vector3.SqrMagnitude(sim.InventoryPosition(i.id)-position)).FirstOrDefault();
+                .Where(i=>i!=null&&i.id!=except&&sim.Stock.Free(i,good)>.0001f).OrderBy(i=>Vector3.SqrMagnitude(sim.InventoryPosition(i.id)-position)).FirstOrDefault();
         }
         public void Cancel(JobState j,string reason="Cancelled")
         {
@@ -82,6 +106,7 @@ namespace Meridian.Colony
             foreach(var b in sim.State.structures.ToArray())
             {
                 if(b.paused||b.phase==BuildPhase.Removed)continue;
+                if(b.definition=="cargo"){CollectCargo(b);continue;}
                 var d=sim.Definition(b);
                 if(b.phase==BuildPhase.Clearing)
                 {
@@ -179,7 +204,7 @@ namespace Meridian.Colony
                 var owner=sim.Structure(source.owner);Vector3 point=owner!=null?sim.Navigation.ServicePoint(owner,a.position):sim.InventoryPosition(source.id);
                 if(!Travel(j,a,point,source.owner))return;
                 float moved=sim.Stock.Transfer(source,cargo,j.good,j.quantity,j.id);sim.Stock.Release(j.id,true);
-                if(moved<.001f){Cancel(j,"Reserved supplies unavailable");return;}
+                if(moved<=.0001f){Cancel(j,"Reserved supplies unavailable");return;}
                 j.quantity=moved;j.carrying=true;j.stage=JobStage.Delivering;sim.Navigation.Stop(a);
                 foreach(var reservation in sim.State.reservations.Where(r=>r.job==j.id&&r.incoming))reservation.quantity=moved;
             }

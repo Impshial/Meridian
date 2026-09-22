@@ -55,7 +55,7 @@ namespace Meridian.Colony
     [Serializable] public class RegionOperation { public int x,z;public string id;public float quotedPrice;public bool active; }
     [Serializable] public class LedgerEntry { public double time;public float amount;public string category,description,transaction; }
     [Serializable] public class EventState { public string id,kind,target;public double begins,ends;public float intensity;public bool applied; }
-    [Serializable] public class WindowState { public string key,entity,world;public Vector4 rect;public int dock;public bool open=true; }
+    [Serializable] public class WindowState { public string key,entity,world;public Vector4 rect;public int dock;public bool open=true,pinned; }
     [Serializable] public class CameraState { public Vector3 pivot;public float yaw,pitch,distance; }
     [Serializable] public class EnvironmentState
     {
@@ -77,14 +77,14 @@ namespace Meridian.Colony
         public List<ResourceDelta> resources=new List<ResourceDelta>();public List<RegionState> regions=new List<RegionState>();public RegionOperation expansion=new RegionOperation();
         public List<LedgerEntry> ledger=new List<LedgerEntry>();public List<EventState> events=new List<EventState>();
         public List<string> researchQueue=new List<string>(),completedResearch=new List<string>(),acknowledged=new List<string>();
-        public List<WindowState> windows=new List<WindowState>();
+        public List<WindowState> windows=new List<WindowState>();public int windowLayoutVersion,utilityView;
         public Vector4 dockSizes=new Vector4(380,380,250,250);public string selected;
         public string Id(string prefix)=>worldId+":"+prefix+":"+(nextId++);
         public float Random(){uint x=randomState==0?0xA341316Cu:randomState;x^=x<<13;x^=x>>17;x^=x<<5;randomState=x;return (x&0xFFFFFF)/16777216f;}
     }
     [Serializable] public class BuildingDefinition
     {
-        public string id,name,category,description,model,research,recipe;public bool sealedModule,machineOnly=true,link;
+        public string id,name,category,description,model,research,recipe;public bool sealedModule,machineOnly=true,link,walkableLink;
         public Vector2 size=new Vector2(12,12);public float height=7,power,generation,capacity=120,waterCapacity,buildSeconds=24,beds,seats,staff,airSupport,waterPerDay,outputPerDay;
         public Profession profession;public List<Amount> cost=new List<Amount>();
     }

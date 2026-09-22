@@ -28,10 +28,13 @@ namespace Meridian.Colony
             UI=gameObject.AddComponent<ColonyUI>();UI.Initialize(this,Transition);
             environment=gameObject.AddComponent<ColonyEnvironment>();environment.Initialize(this);
             Camera.ConfigureColony(Simulation.World.Bounds,Simulation.World.Height,UI.OverUI,()=>UI.TextFocused||UI.Modal||ColonyLoadPipeline.Active,Simulation.World.CanFrame,Simulation.World.NearestFrame);Camera.Focus(state.setup.landing.Position);
-            Camera.SetHome(state.setup.landing.Position);
+            Camera.SetHome(state.setup.landing.Position);Camera.RightClicked+=RightClick;
+            SetUtilityView(state.utilityView);
             if(loaded!=null){Simulation.Networks.Tick(0);Camera.Restore(state.camera);UI.Toast("Colony restored and paused. Press Space to resume.");}
             else{Cinematic=true;Visuals.BeginArrival();Camera.enabled=false;UI.Open("Guide");}
         }
+        void RightClick(){if(active&&!Cinematic&&!UI.Modal)CancelTool();}
+        public void SetUtilityView(int mode){Simulation.State.utilityView=Mathf.Clamp(mode,0,2);Landscape.SetSurfaceVisible(mode!=1);Visuals.Sync();}
         public void SetInteraction(bool value){active=value;worldCapture=false;Camera.SetInteraction(value&&!Cinematic);}
         void ResourceRemoved(string id){Landscape.ResourceChanged(Simulation.World.Object(id));}
         public void FinishArrival()
@@ -41,7 +44,7 @@ namespace Meridian.Colony
         }
         public void TogglePause(){var s=Simulation.State;if(s.speed>0){s.previousSpeed=s.speed;s.speed=0;}else s.speed=s.previousSpeed>0?s.previousSpeed:1;}
         public void Speed(float value){Simulation.State.speed=value;if(value>0)Simulation.State.previousSpeed=value;}
-        public void BeginBuild(string definition){BuildType=definition;HarvestMode=false;linkFrom=linkTo=null;PlacementReason=Simulation.Catalog.Building(definition).link?"Choose the first connection port":"Choose clear, level owned ground";worldCapture=false;}
+        public void BeginBuild(string definition){BuildType=definition;if(ColonyUtilities.Underground(Simulation.Catalog.Building(definition))&&Simulation.State.utilityView==0)SetUtilityView(2);HarvestMode=false;linkFrom=linkTo=null;PlacementReason=Simulation.Catalog.Building(definition).link?"Choose the first connection port":"Choose clear, level owned ground";worldCapture=false;}
         public void BeginHarvest(){CancelTool();HarvestMode=true;UI.Toast("Click a resource, or drag a rectangle across trees and deposits.");}
         public bool CancelTool(){bool had=BuildType!=null||HarvestMode;BuildType=null;HarvestMode=false;linkFrom=linkTo=null;Visuals.Preview(null,default,0,default,false);worldCapture=false;return had;}
         public void Select(string id){Visuals.Selected=id;if(id!=null)UI.Inspect(id);}
@@ -65,6 +68,7 @@ namespace Meridian.Colony
                 {
                     if(keyboard.spaceKey.wasPressedThisFrame)TogglePause();if(keyboard.digit1Key.wasPressedThisFrame)Speed(1);if(keyboard.digit2Key.wasPressedThisFrame)Speed(2);if(keyboard.digit3Key.wasPressedThisFrame)Speed(4);
                     if(keyboard.bKey.wasPressedThisFrame)UI.Open("Build");if(keyboard.hKey.wasPressedThisFrame)BeginHarvest();if(keyboard.fKey.wasPressedThisFrame)Focus(Selected);
+                    if(keyboard.uKey.wasPressedThisFrame)SetUtilityView((Simulation.State.utilityView+1)%3);
                     if(keyboard.f5Key.wasPressedThisFrame)Save("quicksave");if(keyboard.f9Key.wasPressedThisFrame)UI.Quickload();
                     if(keyboard.rKey.wasPressedThisFrame&&BuildType!=null)yaw+=keyboard.leftShiftKey.isPressed||keyboard.rightShiftKey.isPressed?-45:45;
                 }
@@ -82,21 +86,22 @@ namespace Meridian.Colony
         void Input(Mouse mouse)
         {
             Vector2 pointer=mouse.position.ReadValue();bool over=UI.OverUI(pointer);var ray=Camera.Lens.ScreenPointToRay(pointer);
-            if(mouse.rightButton.wasPressedThisFrame){CancelTool();return;}
-            if(BuildType!=null&&!over&&!Camera.IsPanning&&Time.unscaledTime>=previewClock)
+            if(mouse.rightButton.isPressed||Camera.IsOrbiting){worldCapture=false;return;}
+            if(BuildType!=null&&!over&&!Camera.IsOrbiting&&Time.unscaledTime>=previewClock)
             {
                 previewClock=Time.unscaledTime+.08f;var d=Simulation.Catalog.Building(BuildType);
                 if(d.link)
                 {
-                    string hit=Visuals.Pick(ray,Landscape,out var ground);var to=Simulation.Structure(hit);var from=Simulation.Structure(linkFrom);linkTo=to?.id;
-                    placement=from!=null?Simulation.Navigation.Door(from,to?.position??ground):ground;end=to!=null?Simulation.Navigation.Door(to,from?.position??ground):ground;
+                    string hit=Visuals.Pick(ray,Landscape,out var ground,ColonyUtilities.Underground(d)?BuildType:null);var to=Simulation.Structure(hit);var from=Simulation.Structure(linkFrom);linkTo=to?.id;
+                    placement=from!=null?(ColonyUtilities.Underground(d)?ColonyUtilities.Port(Simulation,from,to?.position??ground,BuildType):Simulation.Navigation.Door(from,to?.position??ground)):ground;
+                    end=to!=null?(ColonyUtilities.Underground(d)?ColonyUtilities.Port(Simulation,to,from?.position??ground,BuildType):Simulation.Navigation.Door(to,from?.position??ground)):ground;
                     PlacementReason=from==null?"Choose a building's connection port":ColonyCommands.ValidatePlacement(Simulation,BuildType,placement,0,end,linkFrom,linkTo);
                 }
                 else if(Landscape.Pick(ray,out var hit)){placement=hit.point;PlacementReason=ColonyCommands.ValidatePlacement(Simulation,BuildType,placement,yaw,default);}
                 else PlacementReason="Point at owned terrain";
                 Visuals.Preview(BuildType,placement,yaw,end,PlacementReason==null);
             }
-            if(mouse.leftButton.wasPressedThisFrame){worldCapture=!over&&!Camera.IsPanning;press=pointer;excursion=0;}
+            if(mouse.leftButton.wasPressedThisFrame){worldCapture=!over&&!Camera.IsOrbiting;press=pointer;excursion=0;}
             if(worldCapture)excursion=Mathf.Max(excursion,(pointer-press).magnitude);
             if(!mouse.leftButton.wasReleasedThisFrame)return;bool accept=worldCapture;worldCapture=false;if(!accept)return;
             if(HarvestMode)
@@ -107,7 +112,7 @@ namespace Meridian.Colony
             if(excursion>7*Mathf.Max(.5f,Screen.height/1080f))return;
             if(BuildType!=null)
             {
-                if(Simulation.Catalog.Building(BuildType).link&&linkFrom==null){linkFrom=Simulation.Structure(Visuals.Pick(ray,Landscape,out _))?.id;return;}
+                if(Simulation.Catalog.Building(BuildType).link&&linkFrom==null){linkFrom=Simulation.Structure(Visuals.Pick(ray,Landscape,out _,ColonyUtilities.Underground(Simulation.Catalog.Building(BuildType))?BuildType:null))?.id;return;}
                 if(PlacementReason!=null){UI.Toast(PlacementReason);return;}
                 try{var b=ColonyCommands.Place(Simulation,BuildType,placement,yaw,end,linkFrom,linkTo);Audio.Click();Select(b.id);Visuals.Sync();if(Simulation.Catalog.Building(BuildType).link)linkFrom=linkTo;}
                 catch(Exception error){UI.Toast(error.Message);}return;
@@ -166,6 +171,6 @@ namespace Meridian.Colony
         public void CancelExpansion(){expansionCancellation?.Cancel();}
         public void ReturnToMenu(){if(Saving){UI.Toast("Wait for the current save to finish");return;}SetInteraction(false);ScreenTransition.Travel(Transition,"MainMenu","");}
         void OnApplicationFocus(bool focused){if(!focused)worldCapture=false;}
-        void OnDestroy(){expansionCancellation?.Cancel();expansionCancellation?.Dispose();if(Simulation!=null)Simulation.ResourceRemoved-=ResourceRemoved;if(Current==this)Current=null;}
+        void OnDestroy(){if(Camera)Camera.RightClicked-=RightClick;expansionCancellation?.Cancel();expansionCancellation?.Dispose();if(Simulation!=null)Simulation.ResourceRemoved-=ResourceRemoved;if(Current==this)Current=null;}
     }
 }

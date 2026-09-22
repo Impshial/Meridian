@@ -7,6 +7,15 @@ namespace Meridian.Colony
 {
     public static class ColonyCommands
     {
+        public static void DiscardCargo(ColonySimulation sim,StructureState pile)
+        {
+            if(pile==null||pile.definition!="cargo"||pile.phase==BuildPhase.Removed)return;
+            foreach(var job in sim.State.jobs.Where(j=>sim.Jobs.Active(j)&&j.source==pile.inventory&&!j.carrying).ToArray())
+                sim.Jobs.Cancel(job,"Uncollected pile discarded");
+            var stock=sim.Stock.Get(pile.inventory);
+            foreach(var item in stock.items.ToArray())sim.Stock.Consume(stock,item.good,item.quantity);
+            pile.phase=BuildPhase.Removed;pile.blocker="Discarded by player";sim.Notify(pile.id);
+        }
         public static bool Contains(ColonySimulation sim,StructureState b,Vector3 point,float margin=0)
         {
             var d=sim.Definition(b);
@@ -16,6 +25,7 @@ namespace Meridian.Colony
         public static IEnumerable<SurfaceObjectData> Obstacles(ColonySimulation sim,string definition,Vector3 at,float yaw,Vector3 end)
         {
             var b=new StructureState{definition=definition,position=at,yaw=yaw,end=end};var d=sim.Definition(b);
+            if(ColonyUtilities.Underground(d))return Array.Empty<SurfaceObjectData>();
             var center=d.link?(at+end)*.5f:at;float radius=d.link?Vector3.Distance(at,end)*.5f+5:d.size.magnitude*.5f+5;
             return sim.World.Nearby(center,radius).Where(o=>Contains(sim,b,o.Position,o.Radius+.5f));
         }
@@ -30,6 +40,7 @@ namespace Meridian.Colony
             if(d.link)
             {
                 var source=sim.Structure(from);var target=sim.Structure(to);if(source==null||target==null||from==to)return "Select two different connection ports";
+                if(source.definition=="cargo"||target.definition=="cargo"||ColonyUtilities.Underground(d)&&(sim.Definition(source).link||sim.Definition(target).link))return "Choose a facility connection port";
                 if(source.phase==BuildPhase.Removed||target.phase==BuildPhase.Removed)return "Connection endpoint no longer exists";
                 if(definition=="corridor"&&(!PressurePort(sim,source)||!PressurePort(sim,target)))return "Sealed corridors connect domes, airlocks, landing pads and air processors";
                 if(sim.State.structures.Any(x=>x.phase!=BuildPhase.Removed&&x.definition==definition&&(x.from==from&&x.to==to||x.from==to&&x.to==from)))return "These ports are already connected";
@@ -43,11 +54,12 @@ namespace Meridian.Colony
                 if(!sim.World.Owned(point))return "Footprint extends outside owned land";
                 if(!sim.World.Surface.Sample(point.x,point.z).IsLand)return "Footprint overlaps water";
                 float height=sim.World.Height(point.x,point.z);min=Mathf.Min(min,height);max=Mathf.Max(max,height);
-                if(sim.World.Slope(point.x,point.z)>(d.link?22:12))return "Terrain slope exceeds foundation tolerance";
+                if(!ColonyUtilities.Underground(d)&&sim.World.Slope(point.x,point.z)>(d.link?22:12))return "Terrain slope exceeds foundation tolerance";
             }
             if(!d.link&&max-min>3.5f)return "Height difference exceeds the 3.5 m foundation limit";
             foreach(var other in sim.State.structures.Where(s=>s.phase!=BuildPhase.Removed&&s.id!=ignore&&s.id!=from&&s.id!=to&&s.definition!="cargo"))
             {
+                if(ColonyUtilities.Underground(d))continue;
                 if(sim.Definition(other).link&&(definition!="corridor"||other.definition!="corridor"))continue;
                 if(points.Any(p=>Contains(sim,other,p,d.link?.4f:2))||!d.link&&Contains(sim,b,other.position,2))return "Footprint or doorway clearance overlaps "+other.name;
             }
@@ -58,14 +70,14 @@ namespace Meridian.Colony
             }
             return null;
         }
-        static bool PressurePort(ColonySimulation sim,StructureState b)=>sim.Definition(b).sealedModule||b.definition=="apron"||b.definition=="spaceport"||b.definition=="air";
+        public static bool PressurePort(ColonySimulation sim,StructureState b)=>sim.Definition(b).sealedModule||b.definition=="apron"||b.definition=="spaceport"||b.definition=="air";
         public static SurfaceObjectData Deposit(ColonySimulation sim,string type,Vector3 at)=>sim.World.Nearby(at,18).Where(o=>type=="miner"?(o.Kind==SurfaceObjectKind.Iron||o.Kind==SurfaceObjectKind.Copper):type=="ice"?o.Kind==SurfaceObjectKind.Ice:o.Kind==SurfaceObjectKind.Rock&&o.Radius>2.5f).OrderBy(o=>Vector3.SqrMagnitude(o.Position-at)).FirstOrDefault();
         public static StructureState Place(ColonySimulation sim,string type,Vector3 position,float yaw,Vector3 end=default,string from=null,string to=null)
         {
             string error=ValidatePlacement(sim,type,position,yaw,end,from,to);if(error!=null)throw new InvalidOperationException(error);
             var b=sim.AddStructure(type,sim.Catalog.Building(type).link?position:sim.World.Ground(position),yaw);b.end=end;b.from=from;b.to=to;b.length=Vector3.Distance(position,end);
             if(type=="miner"||type=="quarry"||type=="ice")b.deposit=Deposit(sim,type,position)?.Id;
-            sim.Notify(b.id);return b;
+            ColonyUtilities.Normalize(sim,b);sim.Notify(b.id);return b;
         }
         public static void Dismantle(ColonySimulation sim,StructureState b,bool replacement=false)
         {

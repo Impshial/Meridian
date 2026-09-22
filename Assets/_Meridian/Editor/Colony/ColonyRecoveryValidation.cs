@@ -53,7 +53,7 @@ namespace Meridian.Editor
         public static void BuildPlayer()
         {
             if(EditorApplication.isPlaying)throw new InvalidOperationException("Stop Play Mode first");ColonyBuildSupport.Validate();AssetDatabase.SaveAssets();Directory.CreateDirectory("Builds/Windows");File.WriteAllText("Logs/ColonyBuild.txt","RUNNING");
-            EditorApplication.delayCall+=()=>{try{var report=BuildPipeline.BuildPlayer(new BuildPlayerOptions{scenes=EditorBuildSettings.scenes.Where(s=>s.enabled).Select(s=>s.path).ToArray(),locationPathName="Builds/Windows/Meridian.exe",target=BuildTarget.StandaloneWindows64,options=BuildOptions.None});File.WriteAllText("Logs/ColonyBuild.txt",report.summary.result+"\n"+report.summary.totalErrors+" errors / "+report.summary.totalWarnings+" warnings\n"+report.summary.totalTime.TotalSeconds.ToString("F1")+" seconds / "+report.summary.totalSize+" bytes");}catch(Exception error){File.WriteAllText("Logs/ColonyBuild.txt","FAIL\n"+error);Debug.LogException(error);}};
+            try{var report=BuildPipeline.BuildPlayer(new BuildPlayerOptions{scenes=EditorBuildSettings.scenes.Where(s=>s.enabled).Select(s=>s.path).ToArray(),locationPathName="Builds/Windows/Meridian.exe",target=BuildTarget.StandaloneWindows64,options=BuildOptions.None});File.WriteAllText("Logs/ColonyBuild.txt",report.summary.result+"\n"+report.summary.totalErrors+" errors / "+report.summary.totalWarnings+" warnings\n"+report.summary.totalTime.TotalSeconds.ToString("F1")+" seconds / "+report.summary.totalSize+" bytes");}catch(Exception error){File.WriteAllText("Logs/ColonyBuild.txt","FAIL\n"+error);Debug.LogException(error);}
         }
     }
 }

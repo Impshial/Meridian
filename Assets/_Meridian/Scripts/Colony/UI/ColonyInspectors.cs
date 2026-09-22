@@ -20,6 +20,7 @@ namespace Meridian.Colony
         {GUILayout.BeginHorizontal();Button("Focus  [F]",()=>runtime.Focus(id));Button("Select",()=>runtime.Visuals.Selected=id);GUILayout.EndHorizontal();}
         void Building(StructureState b)
         {
+            if(b.definition=="cargo"){Cargo(b);return;}
             var d=sim.Definition(b);GUILayout.Label(b.name,title);b.name=Text(b.id+":name",b.name);GUILayout.Label(d.description,muted);Actions(b.id);Row("Status",b.phase+" · "+b.blocker);Bar("Condition",b.condition*100);
             if(b.phase==BuildPhase.Removed){GUILayout.Label("Dismantled. Recovered stock remains physical cargo at the old site.");return;}
             if(b.phase!=BuildPhase.Complete)
@@ -61,6 +62,16 @@ namespace Meridian.Colony
             if(sim.Jobs.Storage(b))Filters(sim.Stock.Get(b.inventory));
             foreach(var good in new[]{Good.WorkRobot,Good.ForestryBot,Good.TransportDrone})if(sim.Stock.Available(sim.Stock.Get(b.inventory),good)>=1)Button("Unpack "+good,()=>sim.Industry.DeployCrate(b,good));
             Header("Related jobs");foreach(var j in sim.State.jobs.Where(j=>sim.Jobs.Active(j)&&j.target==b.id))Job(j);
+        }
+        void Cargo(StructureState pile)
+        {
+            GUILayout.Label(pile.name,title);Actions(pile.id);
+            if(pile.phase==BuildPhase.Removed){GUILayout.Label("This pile has been cleared. Materials already aboard carriers continue to storage.");return;}
+            GUILayout.Label("Recovered materials",accent);GUILayout.Label("Machines automatically collect these supplies. The pile disappears when empty. It does not block building placement or walking.",muted);
+            GUILayout.Label(pile.blocker);Inventory(sim.Stock.Get(pile.inventory));
+            Button("Prioritize collection",()=>{sim.Jobs.CollectCargo(pile,true);Toast(pile.blocker);});
+            Button("Discard remaining materials…",()=>Confirm("Discard this pile?","Permanently discard the supplies still on the ground. Materials already aboard carriers are kept.\n"+string.Join(", ",sim.Stock.Get(pile.inventory).items.Select(i=>i.quantity.ToString("0.##")+" "+i.good)),()=>{ColonyCommands.DiscardCargo(sim,pile);runtime.Visuals.Sync();}));
+            Header("Collection jobs");foreach(var job in sim.State.jobs.Where(j=>sim.Jobs.Active(j)&&j.source==pile.inventory))Job(job);
         }
         void Evacuate(StructureState building)
         {

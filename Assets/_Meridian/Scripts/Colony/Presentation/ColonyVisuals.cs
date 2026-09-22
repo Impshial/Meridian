@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace Meridian.Colony
 {
-    public sealed class ColonyVisuals:MonoBehaviour
+    public sealed partial class ColonyVisuals:MonoBehaviour
     {
         ColonySimulation sim;readonly Dictionary<string,GameObject> views=new Dictionary<string,GameObject>();readonly Dictionary<string,BuildPhase> phases=new Dictionary<string,BuildPhase>();
         readonly Dictionary<string,GameObject> flightViews=new Dictionary<string,GameObject>();MaterialPropertyBlock tint;float refresh;
@@ -25,7 +25,7 @@ namespace Meridian.Colony
             foreach(var b in sim.State.structures)
             {
                 if(b.phase==BuildPhase.Removed||!Near(sim.Definition(b).link?(b.position+b.end)*.5f:b.position,b.id)){if(views.TryGetValue(b.id,out var dead)){Destroy(dead);views.Remove(b.id);phases.Remove(b.id);}continue;}
-                if(!views.TryGetValue(b.id,out var view)){if(created++>=64)continue;view=ColonyModels.Structure(b,sim.Definition(b),sim.World);view.transform.SetParent(transform,true);views.Add(b.id,view);}
+                if(!views.TryGetValue(b.id,out var view)){if(created++>=64)continue;view=ColonyUtilities.Underground(sim.Definition(b))?UtilityLink(b):ColonyModels.Structure(b,sim.Definition(b),sim.World);AddUtilityPorts(view,b);view.transform.SetParent(transform,true);views.Add(b.id,view);}
                 var exterior=view.transform.Find("Exterior");if(exterior)exterior.gameObject.SetActive(!Frames(b));
                 var interior=view.transform.Find("Interior");if(interior)interior.gameObject.SetActive(Frames(b));
                 var frame=view.transform.Find("Structural frame");if(frame)frame.gameObject.SetActive(Frames(b));
@@ -34,7 +34,8 @@ namespace Meridian.Colony
                     phases[b.id]=b.phase;bool complete=b.phase==BuildPhase.Complete;
                     foreach(var r in view.GetComponentsInChildren<Renderer>(true)){tint.Clear();if(!complete)tint.SetColor("_BaseColor",new Color(.45f,.65f,.66f));r.SetPropertyBlock(tint);}
                 }
-                if(b.phase==BuildPhase.Construction)view.transform.localScale=new Vector3(1,Mathf.Lerp(.2f,1,b.progress),1);else view.transform.localScale=Vector3.one;
+                if(b.phase==BuildPhase.Construction&&!ColonyUtilities.Underground(sim.Definition(b)))view.transform.localScale=new Vector3(1,Mathf.Lerp(.2f,1,b.progress),1);else view.transform.localScale=Vector3.one;
+                UtilityVisibility(view,b);
             }
             foreach(var a in sim.State.actors)
             {
@@ -64,13 +65,13 @@ namespace Meridian.Colony
                 if(!flightViews.TryGetValue(f.id,out var ship)){ship=ColonyModels.Dropship();ship.transform.SetParent(transform,false);ship.transform.localScale=Vector3.one*.55f;ship.AddComponent<ColonyPickTarget>().id=f.id;var collider=ship.AddComponent<BoxCollider>();collider.center=Vector3.up*3;collider.size=new Vector3(14,7,26);flightViews.Add(f.id,ship);}
                 ship.transform.SetPositionAndRotation(f.position,Quaternion.Euler(0,sim.Structure(f.pad)?.yaw??0,0));Boosters(ship,f.phase==FlightPhase.Descending||f.phase==FlightPhase.Departing||f.phase==FlightPhase.Returning,(float)sim.State.time);
             }
-            Selection();
+            UpdateUtilityFloor();Selection();
         }
         static void Boosters(GameObject ship,bool active,float time)
         {foreach(Transform t in ship.transform)if(t.name=="Booster"){t.gameObject.SetActive(active);t.localScale=new Vector3(1.1f,2.2f+Mathf.Sin(time*23)*.3f,1.1f);}}
         void Selection()
         {
-            if(Selected==null){if(selection)selection.SetActive(false);return;}
+            if(Selected==null||sim.Structure(Selected)?.phase==BuildPhase.Removed||sim.Structure(Selected)!=null&&ColonyUtilities.Underground(sim.Definition(sim.Structure(Selected)))){if(selection)selection.SetActive(false);return;}
             Vector3 position=sim.Position(Selected);var b=sim.Structure(Selected);float radius=b!=null?sim.Definition(b).size.magnitude*.55f:sim.World.Object(Selected)?.Radius+1??2;
             if(!selection){selection=new GameObject("Selected footprint");selection.transform.SetParent(transform,false);outline=ColonyModels.Line(selection.transform,"Selection",new Vector3[48],ColonyModels.Amber,.12f,true);}
             selection.SetActive(true);selection.transform.position=position+Vector3.up*.7f;for(int i=0;i<48;i++){float a=i*Mathf.PI/24;outline.SetPosition(i,new Vector3(Mathf.Sin(a)*radius,0,Mathf.Cos(a)*radius));}
@@ -79,7 +80,18 @@ namespace Meridian.Colony
         {
             if(preview)Destroy(preview);preview=null;if(definition==null)return;var d=sim.Catalog.Building(definition);preview=new GameObject("Construction footprint");preview.transform.SetParent(transform,false);preview.transform.SetPositionAndRotation(point,Quaternion.Euler(0,yaw,0));
             var mat=valid?ColonyModels.Material("Placement valid",new Color(.24f,.9f,.67f)):ColonyModels.Material("Placement blocked",new Color(1,.3f,.2f));
-            if(d.link){preview.transform.rotation=Quaternion.identity;ColonyModels.Line(preview.transform,"Connection",new[]{Vector3.up, end-point+Vector3.up},mat,.3f);}
+            if(d.link)
+            {
+                preview.transform.rotation=Quaternion.identity;
+                if(ColonyUtilities.Underground(d))
+                {
+                    preview.transform.position=Vector3.zero;
+                    var path=ColonyUtilities.Path(sim.World,point,end);var line=ColonyModels.Line(preview.transform,"Buried preview",path,UtilityMaterial(valid?definition:"blocked"),.6f);
+                    var colors=new MaterialPropertyBlock();colors.SetColor("_Color",valid?new Color(.24f,1,.7f):new Color(1,.25f,.18f));line.SetPropertyBlock(colors);
+                    preview.SetActive(UtilitiesVisible);
+                }
+                else ColonyModels.Line(preview.transform,"Connection",new[]{Vector3.up, end-point+Vector3.up},mat,.3f);
+            }
             else
             {
                 float x=d.size.x*.5f,z=d.size.y*.5f;ColonyModels.Line(preview.transform,"Footprint",new[]{new Vector3(-x,.8f,-z),new Vector3(x,.8f,-z),new Vector3(x,.8f,z),new Vector3(-x,.8f,z)},mat,.2f,true);
@@ -87,12 +99,12 @@ namespace Meridian.Colony
                 ColonyModels.Line(preview.transform,"Door clearance",new[]{new Vector3(-1.5f,.85f,z),new Vector3(-1.5f,.85f,z+3),new Vector3(1.5f,.85f,z+3),new Vector3(1.5f,.85f,z)},mat,.15f);
             }
         }
-        public string Pick(Ray ray,SurfaceLandscape landscape,out Vector3 ground)
+        public string Pick(Ray ray,SurfaceLandscape landscape,out Vector3 ground,string utilityType=null)
         {
             ground=default;string fallback=null;float best=float.PositiveInfinity;
             foreach(var hit in Physics.RaycastAll(ray,10000).OrderBy(h=>h.distance))
             {
-                var entity=hit.collider.GetComponentInParent<ColonyPickTarget>();if(!entity)continue;var b=sim.Structure(entity.id);
+                var entity=hit.collider.GetComponentInParent<ColonyPickTarget>();if(!entity||hit.collider.GetComponentInParent<ColonyUtilityMarker>())continue;var b=sim.Structure(entity.id);
                 if(b!=null&&sim.Definition(b).sealedModule&&Frames(b)){fallback=entity.id;continue;}
                 best=hit.distance;fallback=entity.id;break;
             }
@@ -101,8 +113,8 @@ namespace Meridian.Colony
                 ground=terrain.point;var point=ground;if(terrain.distance+1<best&&fallback==null)
                 {var obj=sim.World.Nearby(point,14).Where(o=>ColonyWorld.XZ(o.Position-point).magnitude<o.Radius+2).OrderBy(o=>Vector3.SqrMagnitude(o.Position-point)).FirstOrDefault();if(obj!=null)fallback=obj.Id;}
             }
-            return fallback;
+            return PickUtility(ray,utilityType)??fallback;
         }
-        void OnDestroy(){ColonyModels.ReleaseMaterials();}
+        void OnDestroy(){ReleaseUtilities();ColonyModels.ReleaseMaterials();}
     }
 }

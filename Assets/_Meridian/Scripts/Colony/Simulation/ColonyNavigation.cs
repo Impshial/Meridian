@@ -102,7 +102,7 @@ namespace Meridian.Colony
         bool Clear(Vector3 at,string ignore,bool flying)
         {
             if(!sim.World.Owned(at))return false;if(flying)return true;
-            if(obstacles.TryGetValue(ObstacleCell(at),out var candidates))foreach(var b in candidates){if(b.id==ignore||b.phase==BuildPhase.Removed||b.phase==BuildPhase.Clearing||b.phase==BuildPhase.Delivery||b.definition=="apron"||b.definition=="spaceport"||b.definition=="cable"||b.definition=="pipe"||b.definition=="cargo"||b.definition=="park"||b.definition=="field")continue;if(ColonyCommands.Contains(sim,b,at,1))return false;}
+            if(obstacles.TryGetValue(ObstacleCell(at),out var candidates))foreach(var b in candidates){if(b.id==ignore||b.phase==BuildPhase.Removed||b.phase==BuildPhase.Clearing||b.phase==BuildPhase.Delivery||b.definition=="apron"||b.definition=="spaceport"||ColonyUtilities.Underground(sim.Definition(b))||b.definition=="cargo"||b.definition=="park"||b.definition=="field")continue;if(ColonyCommands.Contains(sim,b,at,1))return false;}
             var key=new Vector2(at.x,at.z);if(groundCache.TryGetValue(key,out bool passable))return passable;
             if(groundCache.Count>50000)groundCache.Clear();return groundCache[key]=sim.World.Walkable(at);
         }

@@ -50,12 +50,19 @@ namespace Meridian.Colony
             var root=new GameObject(b.name);root.transform.SetPositionAndRotation(b.position,Quaternion.Euler(0,b.yaw,0));root.AddComponent<ColonyPickTarget>().id=b.id;
             var physics=root.AddComponent<BoxCollider>();physics.center=Vector3.up*d.height*.5f;physics.size=new Vector3(d.size.x,d.height,d.size.y);
             if(d.link){Object.Destroy(physics);Link(root,b,d);return root;}
+            if(b.definition=="cargo")
+            {
+                physics.center=Vector3.up*.6f;physics.size=new Vector3(2.2f,1.2f,1.8f);
+                Part(root.transform,"Recovered supply crate",PrimitiveType.Cube,Vector3.up*.6f,physics.size,Metal);
+                foreach(int x in new[]{-1,1})Part(root.transform,"Cargo strap",PrimitiveType.Cube,new Vector3(x*.7f,.62f,0),new Vector3(.12f,1.24f,1.84f),Amber);
+                return root;
+            }
             root.transform.position+=Vector3.up*b.foundation;
             var baseGroup=new GameObject("Foundation and ports");baseGroup.transform.SetParent(root.transform,false);
             if(world!=null)for(int z=-1;z<=1;z++)for(int x=-1;x<=1;x++)
             {var local=new Vector3(x*d.size.x*.42f,0,z*d.size.y*.42f);var at=root.transform.TransformPoint(local);float depth=Mathf.Max(.15f,at.y-world.Height(at.x,at.z));Part(baseGroup.transform,"Adjustable foundation pier",PrimitiveType.Cylinder,local-Vector3.up*depth*.5f,new Vector3(.65f,depth*.5f,.65f),Metal);}
             Part(baseGroup.transform,"Foundation",PrimitiveType.Cube,new Vector3(0,.22f,0),new Vector3(d.size.x+.7f,.6f,d.size.y+.7f),Dark);
-            for(int i=0;i<4;i++){float angle=i*90;var q=Quaternion.Euler(0,angle,0);var direction=q*Vector3.forward;float distance=(i%2==0?d.size.y:d.size.x)*.5f;Part(baseGroup.transform,"Connection port",PrimitiveType.Cube,direction*distance+Vector3.up*1.5f,new Vector3(2.8f,2.8f,.45f),White,q);Part(baseGroup.transform,"Port light",PrimitiveType.Cube,direction*(distance+.3f)+Vector3.up*2.5f,new Vector3(1.5f,.14f,.12f),Amber,q);}
+            if(d.sealedModule||b.definition=="apron"||b.definition=="spaceport"||b.definition=="air")for(int i=0;i<4;i++){float angle=i*90;var q=Quaternion.Euler(0,angle,0);var direction=q*Vector3.forward;float distance=(i%2==0?d.size.y:d.size.x)*.5f;Part(baseGroup.transform,"Connection port",PrimitiveType.Cube,direction*distance+Vector3.up*1.5f,new Vector3(2.8f,2.8f,.45f),White,q);Part(baseGroup.transform,"Port light",PrimitiveType.Cube,direction*(distance+.3f)+Vector3.up*2.5f,new Vector3(1.5f,.14f,.12f),Amber,q);}
             if(b.definition=="ship"){var ship=Dropship();ship.transform.SetParent(root.transform,false);ship.transform.localPosition=Vector3.up*.5f;Object.Destroy(physics);var hull=root.AddComponent<BoxCollider>();hull.center=new Vector3(0,4,0);hull.size=new Vector3(14,8,26);}
             else if(d.sealedModule&&b.definition!="airlock")Dome(root,b,d);
             else if(b.definition=="apron"||b.definition=="spaceport")

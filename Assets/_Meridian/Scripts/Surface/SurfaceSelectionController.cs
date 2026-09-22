@@ -123,6 +123,7 @@ namespace Meridian
             surveyCamera=camera.gameObject.AddComponent<SurveyCamera>();
             LandingCandidate initial=session.Candidate??World.DefaultLanding;
             surveyCamera.Initialize(camera,World.Bounds,initial.logicalPosition,World.GroundHeight,presentation.OverUI);
+            surveyCamera.RightClicked+=ClearCandidate;
             var light=new GameObject("Surface daylight",typeof(Light)).GetComponent<Light>();light.transform.SetParent(transform,false);
             light.type=LightType.Directional;light.transform.rotation=Quaternion.Euler(32,-52,0);light.intensity=1.35f;
             light.color=new Color(1,.95f,.86f);light.shadows=LightShadows.Soft;light.shadowStrength=.65f;
@@ -176,7 +177,7 @@ namespace Meridian
             }
             if(mouse==null)return;
             Vector2 point=mouse.position.ReadValue();bool ui=presentation.OverUI(point);
-            if(mouse.rightButton.wasPressedThisFrame && !ui)ClearCandidate();
+            if(surveyCamera.IsOrbiting||mouse.rightButton.isPressed){gesture.Reset();return;}
             bool hitGround=landscape.Pick(surveyCamera.Lens.ScreenPointToRay(point),out var hit);
             if(!locked && !ui && !surveyCamera.IsOrbiting)
             {
@@ -232,6 +233,6 @@ namespace Meridian
         {FailureMessage=message;GenerationFailed=true;SetInteraction(false);Debug.LogWarning("Meridian survey: "+message+(error!=null?"\n"+error:""));}
         void OnApplicationFocus(bool focused){if(!focused)gesture.Reset();}
         void OnDestroy()
-        {cancellation?.Cancel();cancellation?.Dispose();cancellation=null;gesture.Reset();ClickPulse.Clear();World=null;}
+        {if(surveyCamera)surveyCamera.RightClicked-=ClearCandidate;cancellation?.Cancel();cancellation?.Dispose();cancellation=null;gesture.Reset();ClickPulse.Clear();World=null;}
     }
 }

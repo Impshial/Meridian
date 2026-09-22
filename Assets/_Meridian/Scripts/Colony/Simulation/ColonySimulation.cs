@@ -96,6 +96,7 @@ namespace Meridian.Colony
         public ColonySimulation(ColonyState state,SurfaceWorldData surface,ColonyCatalog catalog)
         {
             State=state;ColonySaves.NormalizeReferences(state);Catalog=catalog;definitions=catalog.buildings.ToDictionary(d=>d.id);Stock=new ColonyInventory(state,catalog);World=new ColonyWorld(surface,state);Reindex();
+            foreach(var b in state.structures)ColonyUtilities.Normalize(this,b);
             Networks=new ColonyNetworks(this);Navigation=new ColonyNavigation(this);Jobs=new ColonyJobs(this);People=new ColonyPeople(this);
             Industry=new ColonyIndustry(this);Traffic=new ColonyTraffic(this);Development=new ColonyDevelopment(this);Networks.Rebuild();
         }

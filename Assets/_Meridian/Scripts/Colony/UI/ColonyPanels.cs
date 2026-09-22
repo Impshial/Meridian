@@ -20,7 +20,8 @@ namespace Meridian.Colony
             GUI.Label(new Rect(385,49,Width-920,28),"Metal "+count(Good.Metal)+"   Components "+count(Good.Components)+"   Food "+count(Good.Food)+"   Water "+count(Good.Water),small);
             float x=Width-470;foreach(var item in new[]{("Ⅱ",0f),("1×",1f),("2×",2f),("4×",4f)}){if(GUI.Button(new Rect(x,15,56,32),item.Item1))runtime.Speed(item.Item2);x+=60;}
             if(GUI.Button(new Rect(Width-225,15,100,32),state.masterFrames?"Full domes":"Frames"))runtime.Visuals.ToggleMaster();if(GUI.Button(new Rect(Width-117,15,94,32),"Menu")){Open("Pause");runtime.Speed(0);}
-            GUI.Label(new Rect(Width-470,52,445,24),"Power "+sim.Networks.PowerSupply.ToString("0")+" / "+sim.Networks.PowerDemand.ToString("0")+" kW   ·   Air support "+sim.Networks.AirSupport.ToString("0"),small);
+            if(GUI.Button(new Rect(Width-225,51,202,28),"Layer: "+new[]{"Surface","Underground","Overlay"}[state.utilityView]+"  [U]"))runtime.SetUtilityView((state.utilityView+1)%3);
+            GUI.Label(new Rect(Width-470,52,240,24),"Power "+sim.Networks.PowerSupply.ToString("0")+" / "+sim.Networks.PowerDemand.ToString("0")+" kW",small);
             string[] panels={"Overview","Build","Orbit","People","Machines","Storage","Utilities","Research","Trade","Visitors","Finance","Planetary","Regions","Guide"};float width=(Width-30)/panels.Length;
             for(int i=0;i<panels.Length;i++)if(GUI.Button(new Rect(15+i*width,Height-57,width-5,39),panels[i]))Open(panels[i]);
             if(runtime.BuildType!=null)GUI.Label(new Rect(30,Height-109,Width-60,35),sim.Catalog.Building(runtime.BuildType).name+"  ·  "+(runtime.PlacementReason??"Click to designate")+"  ·  R / Shift+R rotate  ·  Esc cancel",accent);
@@ -64,14 +65,15 @@ namespace Meridian.Colony
         void Orbit()
         {
             GUILayout.Label("ORBITAL ROSTER",title);GUILayout.Label("48 expedition colonists begin in independently supported cryosleep. Select up to six for a flight.",muted);
+            manifest.RemoveWhere(id=>sim.Actor(id)?.location!=PersonLocation.Sleeping);Header("Flight review");Row("Selected",manifest.Count+" / 6");Row("Available beds",sim.People.FreeBeds(false).Count.ToString());Row("Transport","100 credits · 1 colony day");string reason=sim.Traffic.PersonnelWarning(manifest);
+            if(reason!=null)GUILayout.Label(reason,warning);float food=sim.State.inventories.Sum(i=>sim.Stock.Available(i,Good.Food));if(food<(sim.Population+manifest.Count)*6)GUILayout.Label("Low food reserve: fewer than three days for the planned population.",warning);
+            Button("Request personnel dropship",()=>Confirm("Launch this manifest?",string.Join(", ",manifest.Select(id=>sim.Actor(id).name))+"\n100 credits. Reserved beds remain assigned through the trip. Check the food and life-support figures above.",()=>{sim.Traffic.RequestPersonnel(manifest);manifest.Clear();}),reason==null);
+            GUILayout.Label("Connect powered habitat beds to the arrival apron with sealed corridors and working life support. Select passengers below, request a flight, then unpause.",muted);
             var sleeping=sim.State.actors.Where(a=>a.kind==ActorKind.Colonist&&a.location==PersonLocation.Sleeping).ToArray();Pages(ref orbitPage,sleeping.Length);
             foreach(var a in sleeping.Skip(orbitPage*12).Take(12))
             {
                 GUILayout.BeginHorizontal();bool selected=manifest.Contains(a.id);bool value=GUILayout.Toggle(selected,a.name+" · "+a.profession+" · "+a.trait);if(value&&!selected&&manifest.Count<6)manifest.Add(a.id);if(!value)manifest.Remove(a.id);if(GUILayout.Button("Details",GUILayout.Width(75)))Inspect(a.id);GUILayout.EndHorizontal();
             }
-            manifest.RemoveWhere(id=>sim.Actor(id)?.location!=PersonLocation.Sleeping);Header("Flight review");Row("Selected",manifest.Count+" / 6");Row("Available beds",sim.People.FreeBeds(false).Count.ToString());Row("Transport","100 credits · 1 colony day");string reason=sim.Traffic.PersonnelWarning(manifest);
-            if(reason!=null)GUILayout.Label(reason,warning);float food=sim.State.inventories.Sum(i=>sim.Stock.Available(i,Good.Food));if(food<(sim.Population+manifest.Count)*6)GUILayout.Label("Low food reserve: fewer than three days for the planned population.",warning);
-            Button("Request personnel dropship",()=>Confirm("Launch this manifest?",string.Join(", ",manifest.Select(id=>sim.Actor(id).name))+"\n100 credits. Reserved beds remain assigned through the trip. Check the food and life-support figures above.",()=>{sim.Traffic.RequestPersonnel(manifest);manifest.Clear();}),reason==null);
             Header("Recruit to orbit");recruitProfession=(Profession)GUILayout.SelectionGrid((int)recruitProfession,Enum.GetNames(typeof(Profession)),3);Button("Recruit "+recruitProfession+" · 300 credits",()=>sim.Traffic.Recruit(recruitProfession),sim.State.credits>=300);GUILayout.Label("Recruit arrives in orbit after two days; a separate surface flight is still required.",muted);
             foreach(var r in sim.State.recruitment.Where(r=>!r.completed))Row(r.profession.ToString(),(r.remaining/sim.Day).ToString("0.0")+" days to orbit");Header("Space traffic");foreach(var f in sim.State.flights.Where(sim.Traffic.Active))Button(f.name+" · "+f.phase,()=>Inspect(f.id));
         }
@@ -91,12 +93,15 @@ namespace Meridian.Colony
                 float total=sim.State.inventories.Sum(i=>sim.Stock.Count(i,good.id)),reserved=sim.State.reservations.Where(r=>!r.incoming&&r.good==good.id).Sum(r=>r.quantity),transit=sim.State.actors.Sum(a=>sim.Stock.Count(sim.Stock.Get(a.inventory),good.id));
                 Row(good.name,total.ToString("N1")+" owned · "+reserved.ToString("N1")+" reserved · "+transit.ToString("N1")+" carried");
             }
+            Header("Recovered materials on the ground");foreach(var pile in sim.State.structures.Where(b=>b.definition=="cargo"&&b.phase!=BuildPhase.Removed))Button(pile.name+" - "+pile.blocker,()=>Inspect(pile.id));
             Header("Storage filters and production controls");foreach(var b in sim.State.structures.Where(b=>b.phase==BuildPhase.Complete&&(sim.Jobs.Storage(b)||catalog.Recipe(b.recipe)!=null||b.deposit!=null)))Button(b.name+" · "+b.blocker,()=>Inspect(b.id));
         }
         void Utilities()
         {
             GUILayout.Label("UTILITY NETWORKS",title);Row("Generation",sim.Networks.PowerSupply.ToString("0.0")+" kW");Row("Demand",sim.Networks.PowerDemand.ToString("0.0")+" kW");Row("Stored energy",sim.State.structures.Sum(b=>b.battery).ToString("0.0")+" kWh");Row("Air production",sim.Networks.AirSupport.ToString("0")+" people-equivalent/day");
             GUILayout.Label("Cable carries electricity. Pipe carries finite stored water. Corridors join sealed air reserves and human walking routes. Connection types do not substitute for one another.",muted);
+            int layer=GUILayout.SelectionGrid(sim.State.utilityView,new[]{"Surface","Underground","Overlay"},3);if(layer!=sim.State.utilityView)runtime.SetUtilityView(layer);
+            GUILayout.Label("Power (amber) and water (blue) run 3 m below ground, including facility ports. Underground hides terrain; Overlay shows buried services through the surface. U cycles layers. Corridors remain on the surface.",muted);
             foreach(string type in new[]{"cable","pipe","corridor"})Button("Place "+type,()=>runtime.BeginBuild(type));
             foreach(var b in sim.State.structures.Where(b=>b.phase==BuildPhase.Complete&&(sim.Definition(b).generation>0||sim.Definition(b).sealedModule||b.definition=="air"||b.definition=="well"||b.definition=="tank")))Button(b.name+" · "+b.powerFraction.ToString("P0")+" power · "+b.blocker,()=>Inspect(b.id));
         }
@@ -158,7 +163,7 @@ namespace Meridian.Colony
             foreach(var step in steps)GUILayout.Label((step.Item2?"✓  ":"○  ")+step.Item1,step.Item2?accent:skin.label);
             Header("Connection order");GUILayout.Label("Place facilities near the ship. Cable links electrical ports; pipe connects well/tanks and consumers. Corridors connect habitats/services to the apron and air processor. All three are separate tools in Build → Connections. Avoid blocking doors. The ship supplies 30 kW and two charging spots.");
             Header("Initial crew");GUILayout.Label("A useful twelve-person start includes 3 botanists, 2 scientists, 1 medic, 2 service workers, 1 technician and 3 builders. Two greenhouses need biomass and piped water. Food and water in personal packs are real stock, so meal and tap access matter.");
-            Header("Controls");GUILayout.Label("WASD / arrows or middle-drag: screen-relative pan\nWheel: tilt · Shift + wheel / + / −: zoom\nQ / E: smooth 45° turns · Home: reset\nF: focus selected · B: build · H: harvest\nR / Shift+R: rotate placement\nSpace: pause · 1 / 2 / 3: time speed\nF5: quicksave · F9: quickload\nEsc: dismiss tool/window, then pause menu");
+            Header("Controls");GUILayout.Label("WASD / arrows or middle-drag: screen-relative pan\nWheel: tilt · Shift + wheel / + / −: zoom\nQ / E: smooth 45° turns · Right-drag: free rotation\nRight click: cancel tool · U: utility layer · Home: reset\nF: focus selected · B: build · H: harvest\nR / Shift+R: rotate placement\nSpace: pause · 1 / 2 / 3: time speed\nF5: quicksave · F9: quickload\nEsc: dismiss tool/window, then pause menu");
             Button("Dismiss guide",()=>{sim.State.guideDismissed=true;var w=Windows.Find(w=>w.key=="@Guide");if(w!=null)w.open=false;});
         }
         void Pause()

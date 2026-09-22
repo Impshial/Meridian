@@ -20,7 +20,7 @@ namespace Meridian.Colony
         void RestoreGeometry(WindowState window)
         {
             var saved=generalLayout?.windows.Find(w=>w.key==(window.key.StartsWith("@")?window.key:"$inspector"));
-            if(saved!=null){window.rect=saved.rect;window.dock=Mathf.Clamp(saved.dock,0,4);if(window.dock==0&&!window.key.StartsWith("@")){int count=Windows.Count(w=>w.open&&!w.key.StartsWith("@"));window.rect.x+=count%5*30;window.rect.y+=count%5*24;}}
+            if(saved!=null){window.rect=saved.rect;window.dock=window.key.StartsWith("@")?Mathf.Clamp(saved.dock,0,4):0;if(window.dock==0&&!window.key.StartsWith("@")){int count=Windows.Count(w=>w.open&&!w.key.StartsWith("@"));window.rect.x+=count%5*30;window.rect.y+=count%5*24;}}
         }
         void SaveGeneralLayout()
         {
@@ -50,7 +50,7 @@ namespace Meridian.Colony
                 if(local.x>size.x-24&&local.y>size.y-24)edges=2|8;
                 if(edges!=0){resizingWindow=window.key;resizeEdges=edges;gestureStart=local+new Vector2(window.rect.x,window.rect.y);gestureRect=new Rect(window.rect.x,window.rect.y,window.rect.z,window.rect.w);resizeId=WindowID(window.key);pointerCapture=true;Event.current.Use();return;}
             }
-            if(new Rect(8,7,size.x-135,31).Contains(local))
+            if(new Rect(8,7,size.x-208,31).Contains(local))
             {var area=docked?DockRect(window.dock):new Rect(window.rect.x,window.rect.y,window.rect.z,window.rect.w);StartMove(window,local+area.position+(docked?Vector2.up*39:Vector2.zero));}
         }
         int DockAt(Vector2 point)=>point.x<42?1:point.x>Width-42?2:point.y<118?3:point.y>Height-100?4:0;

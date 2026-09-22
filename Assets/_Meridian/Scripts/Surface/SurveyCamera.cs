@@ -20,7 +20,9 @@ namespace Meridian
         private Func<Vector3,float,Vector3> nearestFrame;
         private Vector3 pivot,initialPivot;
         private float distance,targetDistance,yaw=-25,targetYaw=-25,pitch=57,targetPitch=57;
-        private bool enabledInput,middleCapture,focused=true;
+        private bool enabledInput,middleCapture,rightCapture,rightDragged,focused=true;
+        private Vector2 rightOrigin,rightPrevious;private float rightExcursion;
+        public event Action RightClicked;
         private Vector2 previousPointer;
         private Func<bool> keyboardBlocked;public float Sensitivity=1,ZoomSensitivity=1,TiltSensitivity=1;public bool EdgePan;
         public Camera Lens=>lens;
@@ -30,7 +32,7 @@ namespace Meridian
         public float Distance=>distance;
         public bool IsPanning=>middleCapture;
         // Kept for the placement controller: any captured camera gesture suspends hover positioning.
-        public bool IsOrbiting=>middleCapture;
+        public bool IsOrbiting=>middleCapture||rightCapture;
         public void ConfigureColony(Rect area,Func<float,float,float> terrainHeight,Func<Vector2,bool> uiTest,Func<bool> textFocus,Func<Vector3,float,bool> ownership=null,Func<Vector3,float,Vector3> nearest=null)
         {bounds=area;height=terrainHeight;overUI=uiTest;keyboardBlocked=textFocus;canFrame=ownership;nearestFrame=nearest;minimumDistance=28;initialDistance=240;lens.nearClipPlane=.4f;}
         public void SetBounds(Rect area){bounds=area;}
@@ -38,7 +40,7 @@ namespace Meridian
         public void Focus(Vector3 point){pivot=point;ApplyPose();}
         public Colony.CameraState Capture()=>new Colony.CameraState{pivot=pivot,yaw=yaw,pitch=pitch,distance=distance};
         public void Restore(Colony.CameraState state)
-        {pivot=state.pivot;yaw=targetYaw=state.yaw;pitch=targetPitch=Mathf.Clamp(state.pitch,minimumPitch,maximumPitch);distance=targetDistance=Mathf.Clamp(state.distance,minimumDistance,maximumDistance);middleCapture=false;ApplyPose();}
+        {pivot=state.pivot;yaw=targetYaw=state.yaw;pitch=targetPitch=Mathf.Clamp(state.pitch,minimumPitch,maximumPitch);distance=targetDistance=Mathf.Clamp(state.distance,minimumDistance,maximumDistance);ResetCapture();ApplyPose();}
 
         public void Initialize(Camera camera,Rect area,Vector3 focus,Func<float,float,float> terrainHeight,Func<Vector2,bool> uiTest)
         {
@@ -48,7 +50,7 @@ namespace Meridian
             ResetView();ApplyPose();
         }
         public void SetInteraction(bool value)
-        {enabledInput=value;middleCapture=false;if(!value){targetDistance=distance;targetPitch=pitch;targetYaw=yaw;}}
+        {enabledInput=value;ResetCapture();if(!value){targetDistance=distance;targetPitch=pitch;targetYaw=yaw;}}
         public void ResetView()
         {
             pivot=initialPivot;
@@ -56,7 +58,7 @@ namespace Meridian
             float clearance=Mathf.Min(pivot.x-bounds.xMin,bounds.xMax-pivot.x,pivot.z-bounds.yMin,bounds.yMax-pivot.z)-70;
             float focusDistance=Mathf.Max(Mathf.Min(minimumDistance,supported),clearance/GroundRadius());
             distance=targetDistance=Mathf.Min(initialDistance,supported,focusDistance);
-            yaw=targetYaw=-25;pitch=targetPitch=Mathf.Clamp(57,minimumPitch,maximumPitch);middleCapture=false;
+            yaw=targetYaw=-25;pitch=targetPitch=Mathf.Clamp(57,minimumPitch,maximumPitch);ResetCapture();
         }
         void LateUpdate()
         {
@@ -68,7 +70,21 @@ namespace Meridian
                 if(mouse!=null)
                 {
                     Vector2 point=mouse.position.ReadValue();
-                    if(mouse.middleButton.wasPressedThisFrame){middleCapture=!ui;previousPointer=point;}
+                    if(mouse.rightButton.wasPressedThisFrame){rightCapture=!ui&&!middleCapture;rightOrigin=rightPrevious=point;rightExcursion=0;rightDragged=false;}
+                    if(rightCapture)
+                    {
+                        rightExcursion=Mathf.Max(rightExcursion,(point-rightOrigin).magnitude);
+                        float threshold=7*Mathf.Max(.5f,Screen.height/1080f);
+                        if(rightExcursion>threshold)
+                        {
+                            targetYaw+=(point.x-(rightDragged?rightPrevious.x:rightOrigin.x))*.22f*Sensitivity;
+                            rightDragged=true;
+                        }
+                        rightPrevious=point;
+                        if(mouse.rightButton.wasReleasedThisFrame){bool click=!rightDragged&&!ui;rightCapture=false;if(click)RightClicked?.Invoke();}
+                        else if(!mouse.rightButton.isPressed)rightCapture=false;
+                    }
+                    if(mouse.middleButton.wasPressedThisFrame){middleCapture=!ui&&!rightCapture;previousPointer=point;}
                     if(middleCapture && mouse.middleButton.isPressed)
                     {
                         Vector2 delta=point-previousPointer;
@@ -110,9 +126,10 @@ namespace Meridian
                     Vector3 motion=ScreenMotion(Vector2.ClampMagnitude(new Vector2(x,z),1));
                     Pan(motion*(distance*panRate*Sensitivity*Mathf.Min(.05f,Time.unscaledDeltaTime)));
                 }
-                if(EdgePan&&mouse!=null&&!ui&&!middleCapture)
+                if(EdgePan&&mouse!=null&&!ui&&!IsOrbiting)
                 {var p=mouse.position.ReadValue();var edge=new Vector2(p.x<4?-1:p.x>Screen.width-4?1:0,p.y<4?-1:p.y>Screen.height-4?1:0);Pan(ScreenMotion(edge)*distance*panRate*Sensitivity*Mathf.Min(.05f,Time.unscaledDeltaTime));}
             }
+            if(!enabledInput||!focused||(keyboardBlocked?.Invoke()??false))ResetCapture();
             distance=Mathf.Lerp(distance,targetDistance,1-Mathf.Exp(-10*Time.unscaledDeltaTime));
             pitch=Mathf.Lerp(pitch,targetPitch,1-Mathf.Exp(-tiltSmoothing*Time.unscaledDeltaTime));
             SmoothHeading(Time.unscaledDeltaTime);
@@ -189,7 +206,8 @@ namespace Meridian
             var corner=new Vector2(lens.aspect*tangent*sine,tangent)/denominator;
             return Mathf.Max(cosine,corner.magnitude);
         }
-        void OnApplicationFocus(bool value){focused=value;if(!value)middleCapture=false;}
-        void OnDisable()=>middleCapture=false;
+        void ResetCapture(){middleCapture=rightCapture=rightDragged=false;rightExcursion=0;}
+        void OnApplicationFocus(bool value){focused=value;if(!value)ResetCapture();}
+        void OnDisable()=>ResetCapture();
     }
 }

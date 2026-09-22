@@ -23,13 +23,29 @@ namespace Meridian.Colony
         List<WindowState> Windows=>sim!=null?sim.State.windows:menuWindows;
         Vector4 DockSizes{get=>sim!=null?sim.State.dockSizes:menuDock;set{if(sim!=null)sim.State.dockSizes=value;else menuDock=value;}}
         public void Initialize(ColonyRuntime owner,ScreenTransition screenTransition)
-        {runtime=owner;sim=owner?.Simulation;catalog=sim?.Catalog??ColonyCatalog.Load();transition=screenTransition;ReadGeneralLayout();if(sim!=null){runtime.Visuals.Selected=sim.State.selected;foreach(var w in Windows)if(w.world!=sim.State.worldId)w.open=false;}RefreshSaves();}
+        {runtime=owner;sim=owner?.Simulation;catalog=sim?.Catalog??ColonyCatalog.Load();transition=screenTransition;ReadGeneralLayout();if(sim!=null){runtime.Visuals.Selected=sim.State.selected;foreach(var w in Windows)if(w.world!=sim.State.worldId)w.open=false;}NormalizeInspectorLayout();RefreshSaves();}
         public void Toast(string message){toast=message;toastUntil=Time.unscaledTime+7;}
         public void CaptureLayout(){if(sim!=null)sim.State.selected=runtime.Selected;SaveGeneralLayout();}
         public void Open(string panel)=>Show("@"+panel,panel);
         public void Inspect(string entity)=>Show(entity,entity);
+        void NormalizeInspectorLayout()
+        {
+            if(sim==null||sim.State.windowLayoutVersion>=1)return;
+            var inspectors=Windows.Where(w=>!w.key.StartsWith("@")).ToArray();
+            var keep=inspectors.LastOrDefault(w=>w.open);
+            foreach(var w in inspectors){w.dock=0;w.pinned=false;w.open=w==keep;}
+            sim.State.windowLayoutVersion=1;
+        }
         void Show(string key,string entity)
         {
+            if(!key.StartsWith("@"))
+            {
+                var reusable=Windows.LastOrDefault(w=>w.open&&!w.key.StartsWith("@")&&!w.pinned&&w.dock==0);
+                var existing=Windows.Find(w=>w.key==key);
+                foreach(var old in Windows.Where(w=>w.key!=key&&!w.key.StartsWith("@")&&!w.pinned&&w.dock==0).ToArray())
+                {old.open=false;if(old!=reusable){Windows.Remove(old);scroll.Remove(old.key);ids.Remove(old.key);}}
+                if(existing==null&&reusable!=null){scroll.Remove(reusable.key);ids.Remove(reusable.key);reusable.key=key;reusable.entity=entity;}
+            }
             var window=Windows.Find(w=>w.key==key);if(window==null){int count=Windows.Count(w=>w.open);window=new WindowState{key=key,entity=entity,world=sim?.State.worldId,rect=new Vector4(150+count%5*36,145+count%5*28,key=="@Build"?520:480,620)};RestoreGeometry(window);Windows.Add(window);}window.open=true;activeWindow=key;if(window.dock>0)dockTabs[window.dock]=key;
             bringFront=key;if(key=="@Save"||key=="@Load")RefreshSaves();runtime?.Audio.Click();
         }
@@ -52,7 +68,7 @@ namespace Meridian.Colony
         {
             PreparePortrait();
             if(sim?.State.failed==true&&!Windows.Any(w=>w.key=="@Recovery"&&w.open))Open("Recovery");
-            if(Mouse.current!=null){if(Mouse.current.leftButton.wasPressedThisFrame||Mouse.current.middleButton.wasPressedThisFrame)pointerCapture=OverUI(Mouse.current.position.ReadValue());if(!Mouse.current.leftButton.isPressed&&!Mouse.current.middleButton.isPressed)pointerCapture=false;}
+            if(Mouse.current!=null){if(Mouse.current.leftButton.wasPressedThisFrame||Mouse.current.middleButton.wasPressedThisFrame||Mouse.current.rightButton.wasPressedThisFrame)pointerCapture=OverUI(Mouse.current.position.ReadValue());if(!Mouse.current.leftButton.isPressed&&!Mouse.current.middleButton.isPressed&&!Mouse.current.rightButton.isPressed)pointerCapture=false;}
             if(runtime&&runtime.Simulation.State.deployed&&!Modal&&Mouse.current!=null)
             {
                 var pointer=Mouse.current.position.ReadValue();if(!OverUI(pointer))
@@ -132,7 +148,7 @@ namespace Meridian.Colony
             if(blocked)Event.current.type=type;
             w.rect=new Vector4(r.x,r.y,r.width,r.height);
         }
-        void Dock(WindowState w,int dock){w.dock=dock;dockTabs[dock]=w.key;}
+        void Dock(WindowState w,int dock){w.dock=dock;w.pinned=true;dockTabs[dock]=w.key;}
         Rect DockRect(int zone)
         {
             var s=DockSizes;bool left=Windows.Any(w=>w.open&&w.dock==1),right=Windows.Any(w=>w.open&&w.dock==2);float x=left?s.x+8:8,width=Width-x-(right?s.y+8:8);
@@ -142,8 +158,15 @@ namespace Meridian.Colony
         {
             var tabs=Windows.Where(w=>w.open&&w.dock==zone).ToArray();if(tabs.Length==0)return;var r=DockRect(zone);GUI.Box(r,GUIContent.none,skin.window);
             if(!dockTabs.TryGetValue(zone,out var selected)||!tabs.Any(w=>w.key==selected))selected=dockTabs[zone]=tabs[0].key;
-            float tabWidth=(r.width-14)/tabs.Length;for(int i=0;i<tabs.Length;i++)
-            {var tab=tabs[i];var tabRect=new Rect(r.x+7+i*tabWidth,r.y+5,tabWidth-3,32);if(GUI.enabled&&Event.current.type==EventType.MouseDown&&tabRect.Contains(Event.current.mousePosition)){selected=dockTabs[zone]=tab.key;StartMove(tab,Event.current.mousePosition);}GUI.Toggle(tabRect,tab.key==selected,new GUIContent(Title(tab),"Drag this tab into the play area to undock"),skin.button);}
+            int capacity=Mathf.Max(1,Mathf.FloorToInt((r.width-80)/140));int selectedIndex=Array.FindIndex(tabs,w=>w.key==selected);
+            if(tabs.Length>capacity)
+            {
+                if(GUI.Button(new Rect(r.x+5,r.y+5,30,32),"‹")){selectedIndex=(selectedIndex+tabs.Length-1)%tabs.Length;selected=dockTabs[zone]=tabs[selectedIndex].key;}
+                if(GUI.Button(new Rect(r.xMax-35,r.y+5,30,32),"›")){selectedIndex=(selectedIndex+1)%tabs.Length;selected=dockTabs[zone]=tabs[selectedIndex].key;}
+            }
+            int start=selectedIndex/capacity*capacity,count=Mathf.Min(capacity,tabs.Length-start);float tabWidth=(r.width-80)/count;
+            for(int i=0;i<count;i++)
+            {var tab=tabs[start+i];var tabRect=new Rect(r.x+40+i*tabWidth,r.y+5,tabWidth-3,32);if(GUI.enabled&&Event.current.type==EventType.MouseDown&&tabRect.Contains(Event.current.mousePosition)){selected=dockTabs[zone]=tab.key;StartMove(tab,Event.current.mousePosition);}GUI.Toggle(tabRect,tab.key==selected,new GUIContent(Title(tab),"Drag this tab into the play area to undock"),skin.button);}
             var activeTab=tabs.First(w=>w.key==selected);drawn[activeTab.key]=r;GUILayout.BeginArea(new Rect(r.x,r.y+39,r.width,r.height-39));WindowBody(activeTab,new Vector2(r.width,r.height-39),true);GUILayout.EndArea();
             Rect edge=zone==1?new Rect(r.xMax-3,r.y,6,r.height):zone==2?new Rect(r.x-3,r.y,6,r.height):zone==3?new Rect(r.x,r.yMax-3,r.width,6):new Rect(r.x,r.y-3,r.width,6);GUI.Box(edge,GUIContent.none);
             if(GUI.enabled&&Event.current.type==EventType.MouseDown&&edge.Contains(Event.current.mousePosition)){splitDock=zone;Event.current.Use();}
@@ -154,7 +177,8 @@ namespace Meridian.Colony
         {
             if(GUI.enabled&&Event.current.type==EventType.MouseDown){activeWindow=window.key;bringFront=window.key;}
             WindowTitleGesture(window,size,docked);
-            GUI.Label(new Rect(14,7,size.x-145,31),Title(window),accent);
+            GUI.Label(new Rect(14,7,size.x-210,31),Title(window),accent);
+            if(!window.key.StartsWith("@")&&!docked&&GUI.Button(new Rect(size.x-185,6,66,29),window.pinned?"Unpin":"Pin"))window.pinned=!window.pinned;
             if(GUI.Button(new Rect(size.x-42,6,31,29),"x",small)){window.open=false;return;}
             if(GUI.Button(new Rect(size.x-112,6,63,29),docked?"Float":"Dock")){if(docked){window.dock=0;window.rect=new Vector4(Width*.5f-240,150,480,600);}else Dock(window,2);}
             GUILayout.BeginArea(new Rect(10,42,size.x-20,size.y-56));var position=scroll.TryGetValue(window.key,out var old)?old:Vector2.zero;position=GUILayout.BeginScrollView(position);scroll[window.key]=position;
